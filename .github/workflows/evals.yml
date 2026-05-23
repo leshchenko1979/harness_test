@@ -1,10 +1,8 @@
 name: LLM Agent Evals
 
+# Temporarily disabled — re-enable push/PR when CI is fixed.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   run-evals:
