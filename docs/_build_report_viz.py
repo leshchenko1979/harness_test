@@ -21,7 +21,7 @@ VARIANTS = [
     "baseline",
 ]
 VARIANT_LABELS = {
-    "opencrabs_original": "OpenCrabs control",
+    "opencrabs_original": "original toolset",
     "opencrabs_h1_docs": "H1: docs fix",
     "opencrabs_h3_collision": "H3: empty-hash",
     "opencrabs_h2_fuzzy": "H2: fuzzy replace",
