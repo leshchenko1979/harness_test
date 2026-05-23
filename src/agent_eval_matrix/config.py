@@ -95,28 +95,6 @@ def get_model(model_id: str) -> Model:
             )
         return DemoModel(case=case)
 
-
-def matrix_uses_only_mock_models(model_ids: list[str]) -> bool:
-    registry = _get_model_registry()
-    if not model_ids:
-        return False
-    for model_id in model_ids:
-        preset = registry.get(model_id)
-        if preset is None or preset.provider != "mock":
-            return False
-    return True
-
-
-def resolve_demo_mode(
-    *,
-    cli_demo_flag: bool,
-    matrix_name: str,
-    model_ids: list[str],
-) -> bool:
-    if cli_demo_flag or matrix_name == "demo":
-        return True
-    return matrix_uses_only_mock_models(model_ids)
-
     api_key = os.environ.get(preset.api_key_env)
     if not api_key:
         raise ValueError(
@@ -168,3 +146,25 @@ def resolve_demo_mode(
         )
 
     raise ValueError(f"Unsupported provider {preset.provider!r} for model {model_id!r}")
+
+
+def matrix_uses_only_mock_models(model_ids: list[str]) -> bool:
+    registry = _get_model_registry()
+    if not model_ids:
+        return False
+    for model_id in model_ids:
+        preset = registry.get(model_id)
+        if preset is None or preset.provider != "mock":
+            return False
+    return True
+
+
+def resolve_demo_mode(
+    *,
+    cli_demo_flag: bool,
+    matrix_name: str,
+    model_ids: list[str],
+) -> bool:
+    if cli_demo_flag or matrix_name == "demo":
+        return True
+    return matrix_uses_only_mock_models(model_ids)

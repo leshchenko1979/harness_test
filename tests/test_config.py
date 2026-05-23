@@ -67,3 +67,11 @@ def test_resolve_demo_mode_real_models() -> None:
         matrix_name="ci",
         model_ids=["minimax-m2.7"],
     )
+
+
+def test_get_model_openai_preset(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pydantic_ai.models.openai import OpenAIChatModel
+
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+    model = get_model("minimax-m2.7")
+    assert isinstance(model, OpenAIChatModel)
