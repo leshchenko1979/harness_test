@@ -7,8 +7,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from agent_eval_matrix.cases import load_cases
+from agent_eval_matrix.config import exit_on_missing_api_keys
 from agent_eval_matrix.observability import get_commit_sha, setup_observability
-from agent_eval_matrix.report import new_matrix_report, print_summary, write_aggregate_report
+from agent_eval_matrix.report import (
+    new_matrix_report,
+    print_summary,
+    write_aggregate_report,
+)
 from agent_eval_matrix.matrices import (
     build_model_registry,
     build_tool_set_registry,
@@ -46,6 +51,9 @@ async def run_single_case(
     if model_id not in model_registry:
         raise SystemExit(f"Unknown model preset: {model_id!r}")
 
+    demo_mode = model_registry[model_id].provider == "mock"
+    exit_on_missing_api_keys([model_id], demo_mode=demo_mode)
+
     variant = variant_from_tool_set(tool_set, model_id, EXPERIMENTS)
 
     run_id = "smoke" if trace else None
@@ -74,9 +82,13 @@ def main(argv: list[str] | None = None) -> None:
         "--tool-set",
         type=str,
         default=None,
-        help="Tool set name, e.g. baseline or opencrabs_original",
+        help="Tool set name (e.g. baseline, demo)",
     )
-    run_parser.add_argument("--model", default="minimax-m2.7")
+    run_parser.add_argument(
+        "--model",
+        default="minimax-m2.7",
+        help="Model preset id (use mock for no API key with --tool-set demo)",
+    )
     run_parser.add_argument("--trace", action="store_true")
 
     args = parser.parse_args(argv)

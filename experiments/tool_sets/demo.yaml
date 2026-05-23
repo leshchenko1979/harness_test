@@ -1,0 +1,7 @@
+name: demo
+system_prompt: |
+  You are a file editing agent in a sandbox workspace. Use workspace-relative paths only.
+  Use read_file before str_replace; old_str must match the file exactly.
+tools:
+  - tooling/reference/read_file.py
+  - tooling/reference/str_replace.py

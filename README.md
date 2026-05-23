@@ -4,6 +4,15 @@
 
 Each matrix run is `tool_sets × models × cases`, executed in an isolated workspace per case. Swap entire agent configurations without redeploying Python bundles.
 
+### Try it in 60 seconds (no API key)
+
+```bash
+uv sync --extra dev
+uv run python -m agent_eval_matrix.matrix run --demo
+```
+
+You should see a matrix summary and a report under [reports/](reports/). The default `matrix run` (no flags) uses the same demo matrix. For real LLM evals, add API keys per [Quick start](#quick-start) below.
+
 ## Why this exists
 
 - Agent comparisons do not scale as one-off scripts — you need a **tool × model × task** grid.
@@ -41,9 +50,13 @@ Commands use placeholders below; bundled names under [experiments/](experiments/
 
 | Workflow                   | Command                                                                                   |
 | -------------------------- | ----------------------------------------------------------------------------------------- |
-| Full matrix (default spec) | `uv run python -m agent_eval_matrix.matrix run`                                                     |
-| Custom matrix              | `uv run python -m agent_eval_matrix.matrix run --matrix path/to/matrix.yaml`                        |
-| One variant                | `uv run python -m agent_eval_matrix.matrix run --variant <tool-set>/<model-preset>`                 |
+| Demo (no API key)          | `uv run python -m agent_eval_matrix.matrix run --demo`                                    |
+| Default run (demo matrix)  | `uv run python -m agent_eval_matrix.matrix run`                                           |
+| CI smoke (2 cells)         | `uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/ci.yaml`   |
+| Full benchmark (20 cells)  | `uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/full.yaml` |
+| Custom matrix              | `uv run python -m agent_eval_matrix.matrix run --matrix path/to/matrix.yaml`            |
+| One variant                | `uv run python -m agent_eval_matrix.matrix run --variant <tool-set>/<model-preset>`     |
+| One case (no API key)      | `uv run python -m agent_eval_matrix.evals run --case hello_world --tool-set demo --model mock` |
 | One case                   | `uv run python -m agent_eval_matrix.evals run --case <name> --tool-set <tool-set> --model <preset>` |
 | Debug trace                | add `--trace`                                                                             |
 
@@ -117,7 +130,7 @@ Compare runs across commits via artifact JSON; debug a single cell with `agent_e
 
 Tutorial names (`my_set`, `my_case`, …) are generic. See [Examples in this repository](#examples-in-this-repository) for bundled sample content.
 
-### 0. Install
+### 0. Install and optional demo
 
 Requires [uv](https://docs.astral.sh/uv/) and Python ≥3.11.
 
@@ -129,6 +142,8 @@ cp .env.example .env
 ```
 
 Re-run `uv sync --extra dev` only when `uv.lock` or `pyproject.toml` changes. Do not recreate `.venv` with `python3 -m venv`.
+
+Try the harness without keys: `uv run python -m agent_eval_matrix.matrix run --demo` (see [Try it in 60 seconds](#try-it-in-60-seconds-no-api-key) above).
 
 ### 1. Add provider API keys
 
@@ -227,7 +242,7 @@ case_sets:
 # or: cases: [my_case]
 ```
 
-Default run target when `--matrix` is omitted: [experiments/matrices/full.yaml](experiments/matrices/full.yaml) (example content in this repo).
+Default run target when `--matrix` is omitted: [experiments/matrices/demo.yaml](experiments/matrices/demo.yaml) (mocked model, no API key). Use [experiments/matrices/full.yaml](experiments/matrices/full.yaml) for the full benchmark (4 tool sets × 5 cases) and [experiments/matrices/ci.yaml](experiments/matrices/ci.yaml) for CI smoke (2 cells).
 
 ### 6. Run
 
@@ -250,7 +265,7 @@ The following are **reference implementations**, not requirements for your fork:
 | [experiments/models/](experiments/models/)                                        | Sample model presets (`minimax-m2.7.yaml`, …)                             |
 | [experiments/tool_sets/](experiments/tool_sets/)                                  | Sample stacks (reference-style, OpenCrabs-style ports, hypothesis variants) |
 | [experiments/cases/](experiments/cases/) + [experiments/case_sets/](experiments/case_sets/) | Sample workspace tasks (file-outcome scoring)                             |
-| [experiments/matrices/](experiments/matrices/)                                    | Sample matrices (`full`, `ci`, `hashline_hypotheses`, …)                  |
+| [experiments/matrices/](experiments/matrices/)                                    | Sample matrices (`demo`, `ci`, `full`, `hashline_hypotheses`, …)          |
 | [docs/README.md](docs/README.md)                                                    | Example study write-up and charts                                         |
 | [reports/](reports/)                                                              | Example matrix JSON from a past run                                       |
 

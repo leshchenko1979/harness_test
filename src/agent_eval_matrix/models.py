@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-ProviderKind = Literal["openai", "anthropic", "google"]
+ProviderKind = Literal["openai", "anthropic", "google", "mock"]
 
 
 class FileEditDeps(BaseModel):
@@ -46,7 +46,9 @@ class ModelPreset(BaseModel):
     base_url: str | None = None
 
     @model_validator(mode="after")
-    def require_openai_base_url(self) -> ModelPreset:
+    def validate_provider_fields(self) -> ModelPreset:
+        if self.provider == "mock":
+            return self
         if self.provider == "openai" and not self.base_url:
             raise ValueError("openai provider requires base_url")
         return self

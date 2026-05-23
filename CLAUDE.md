@@ -12,10 +12,13 @@ Matrix evals over **cases** (YAML) × **tool sets** (YAML) × **models** (YAML).
 
 ```bash
 uv sync --extra dev
-# .env: MINIMAX_API_KEY
+# Demo (no API key): mocked model, 1×1 matrix
+uv run python -m agent_eval_matrix.matrix run --demo
+uv run python -m agent_eval_matrix.matrix run   # default: demo.yaml
 
-uv run python -m agent_eval_matrix.matrix run
+# Real evals (.env: MINIMAX_API_KEY)
 uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/ci.yaml
+uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/full.yaml
 uv run python -m agent_eval_matrix.evals run --case add_docstring --tool-set baseline
 uv run python -m agent_eval_matrix.matrix run --variant strict/verbose/minimax-m2.7
 ```

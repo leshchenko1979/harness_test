@@ -21,6 +21,13 @@ def test_build_model_registry_loads_minimax() -> None:
     assert preset.api_key_env == "MINIMAX_API_KEY"
 
 
+def test_build_model_registry_loads_mock() -> None:
+    registry = build_model_registry(EXPERIMENTS)
+    preset = registry["mock"]
+    assert preset.provider == "mock"
+    assert preset.model_name == "demo"
+
+
 def test_resolve_matrix_unknown_model(tmp_path: Path) -> None:
     matrix_path = tmp_path / "bad.yaml"
     matrix_path.write_text(
@@ -47,6 +54,17 @@ def test_env_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MINIMAX_BASE_URL", "https://override.example.com/v1/")
     assert resolve_model_name(preset) == "override-model"
     assert resolve_base_url(preset) == "https://override.example.com/v1"
+
+
+def test_resolve_matrix_demo() -> None:
+    resolved = resolve_matrix(
+        EXPERIMENTS / "matrices" / "demo.yaml", EXPERIMENTS, CASES
+    )
+    assert resolved.matrix_name == "demo"
+    assert len(resolved.variants) == 1
+    assert len(resolved.cases) == 1
+    assert resolved.cases[0].name == "hello_world"
+    assert resolved.variants[0].variant_id == "demo/mock"
 
 
 def test_resolve_matrix_ci() -> None:

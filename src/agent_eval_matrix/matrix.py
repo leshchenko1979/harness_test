@@ -8,9 +8,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from agent_eval_matrix.config import exit_on_missing_api_keys, resolve_demo_mode
 from agent_eval_matrix.models import ExperimentVariant
 from agent_eval_matrix.observability import get_commit_sha, setup_observability
-from agent_eval_matrix.report import new_matrix_report, print_summary, write_aggregate_report
+from agent_eval_matrix.report import (
+    new_matrix_report,
+    print_summary,
+    write_aggregate_report,
+)
 from agent_eval_matrix.matrices import resolve_matrix
 from agent_eval_matrix.task import evaluate_case
 
@@ -18,7 +23,8 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPERIMENTS = ROOT / "experiments"
-DEFAULT_MATRIX = EXPERIMENTS / "matrices" / "full.yaml"
+DEMO_MATRIX = EXPERIMENTS / "matrices" / "demo.yaml"
+DEFAULT_MATRIX = DEMO_MATRIX
 DEFAULT_CASES = EXPERIMENTS / "cases"
 
 
@@ -35,6 +41,8 @@ async def run_matrix(
     cases_path: Path,
     variant_filter: str | None = None,
     trace: bool = False,
+    *,
+    demo_mode: bool = False,
 ) -> int:
     setup_observability()
     load_dotenv(ROOT / ".env")
@@ -44,6 +52,17 @@ async def run_matrix(
     variants = filter_variants(resolved.variants, variant_filter)
     if not variants:
         raise ValueError(f"No variants matched filter: {variant_filter!r}")
+
+    model_ids = list({v.model_id for v in variants})
+    demo_mode = resolve_demo_mode(
+        cli_demo_flag=demo_mode,
+        matrix_name=resolved.matrix_name,
+        model_ids=model_ids,
+    )
+    exit_on_missing_api_keys(model_ids, demo_mode=demo_mode)
+
+    if demo_mode:
+        logger.info("Demo mode: mocked model, no API calls")
 
     run_id = str(uuid.uuid4())[:8] if trace else None
     report = new_matrix_report(
@@ -82,7 +101,7 @@ def main(argv: list[str] | None = None) -> None:
         "--matrix",
         type=Path,
         default=None,
-        help="Path to matrix YAML (default: experiments/matrices/full.yaml)",
+        help="Path to matrix YAML (default: experiments/matrices/demo.yaml)",
     )
     run_parser.add_argument(
         "--cases",
@@ -101,16 +120,30 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Write JSONL trace events under reports/traces/",
     )
+    run_parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Run demo matrix with mocked model (no API key required)",
+    )
 
     args = parser.parse_args(argv)
     if args.command == "run":
-        matrix_path = args.matrix or DEFAULT_MATRIX
+        if args.demo:
+            matrix_path = DEMO_MATRIX
+            demo_mode = True
+        elif args.matrix is None:
+            matrix_path = DEFAULT_MATRIX
+            demo_mode = True
+        else:
+            matrix_path = args.matrix
+            demo_mode = False
         code = asyncio.run(
             run_matrix(
                 matrix_path=matrix_path,
                 cases_path=args.cases,
                 variant_filter=args.variant,
                 trace=args.trace,
+                demo_mode=demo_mode,
             )
         )
         raise SystemExit(code)

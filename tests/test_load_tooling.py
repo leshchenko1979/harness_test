@@ -34,6 +34,7 @@ def test_tool_set_registry_names() -> None:
     registry = build_tool_set_registry(EXPERIMENTS)
     assert set(registry) == {
         "baseline",
+        "demo",
         "minimal",
         "strict/verbose",
         "opencrabs_original",

@@ -1,0 +1,8 @@
+name: hello_world
+instruction: Change hello.txt so its entire contents are the single word world.
+file_name: hello.txt
+initial_content: |
+  hello
+expected_output: |
+  world
+tags: []

@@ -7,12 +7,18 @@ from pydantic_ai.usage import RunUsage
 from pydantic_evals import Case, Dataset
 
 from agent_eval_matrix.agent import build_agent
+from agent_eval_matrix.demo_context import demo_case
 from agent_eval_matrix.evaluators import (
     EfficiencyEvaluator,
     FileContentMatch,
     ToolUsageEvaluator,
 )
-from agent_eval_matrix.models import CaseResult, EditCase, ExperimentVariant, FileEditDeps
+from agent_eval_matrix.models import (
+    CaseResult,
+    EditCase,
+    ExperimentVariant,
+    FileEditDeps,
+)
 from agent_eval_matrix.observability import append_trace_event, span_context
 from agent_eval_matrix.run_metrics import tokens_spent, tool_failures, turns
 
@@ -23,42 +29,46 @@ async def run_agent_on_case(
     run_id: str | None = None,
 ) -> tuple[str, RunUsage]:
     """Run agent in isolated temp workspace; return final content and RunUsage."""
-    agent = build_agent(variant)
-    with tempfile.TemporaryDirectory() as temp_dir:
-        workspace = Path(temp_dir)
-        file_path = workspace / case.file_name
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(case.initial_content, encoding="utf-8")
+    token = demo_case.set(case)
+    try:
+        agent = build_agent(variant)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir)
+            file_path = workspace / case.file_name
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(case.initial_content, encoding="utf-8")
 
-        deps = FileEditDeps(workspace=workspace)
-        span_name = f"eval/{variant.variant_id}/{case.name}"
-        with span_context(
-            span_name,
-            variant_id=variant.variant_id,
-            case_name=case.name,
-        ):
-            if run_id:
-                append_trace_event(
-                    run_id,
-                    {
-                        "event": "agent_start",
-                        "variant": variant.variant_id,
-                        "case": case.name,
-                    },
-                )
-            result = await agent.run(case.instruction, deps=deps)
-            usage = result.usage
-            if run_id:
-                append_trace_event(
-                    run_id,
-                    {
-                        "event": "agent_done",
-                        "variant": variant.variant_id,
-                        "case": case.name,
-                    },
-                )
+            deps = FileEditDeps(workspace=workspace)
+            span_name = f"eval/{variant.variant_id}/{case.name}"
+            with span_context(
+                span_name,
+                variant_id=variant.variant_id,
+                case_name=case.name,
+            ):
+                if run_id:
+                    append_trace_event(
+                        run_id,
+                        {
+                            "event": "agent_start",
+                            "variant": variant.variant_id,
+                            "case": case.name,
+                        },
+                    )
+                result = await agent.run(case.instruction, deps=deps)
+                usage = result.usage
+                if run_id:
+                    append_trace_event(
+                        run_id,
+                        {
+                            "event": "agent_done",
+                            "variant": variant.variant_id,
+                            "case": case.name,
+                        },
+                    )
 
-        return file_path.read_text(encoding="utf-8"), usage
+            return file_path.read_text(encoding="utf-8"), usage
+    finally:
+        demo_case.reset(token)
 
 
 def build_dataset(cases: list[EditCase]) -> Dataset:
