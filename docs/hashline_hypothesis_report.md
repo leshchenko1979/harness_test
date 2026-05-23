@@ -1,6 +1,6 @@
 # OpenCrabs file-editing evaluation — hashline and edit-tool design
 
-External evaluation of OpenCrabs-style tooling via a Python port in the `harness_test` repository. **OpenCrabs upstream was not consulted** before this study was designed or run.
+External evaluation of OpenCrabs-style tooling via a Python port in the `harness_test` repository.
 
 The matrix tests **four design questions**: hashline read/edit protocol (H1–H3), whether **two edit tools** (`edit_file` + `hashline_edit`) should become **one** fuzzy `str_replace` (H2), and how the **original OpenCrabs toolset** compares to a **simplified reference** tool set (H4).
 
