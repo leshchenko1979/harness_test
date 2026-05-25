@@ -1,0 +1,11 @@
+name: hashline-bench
+profiles:
+  - opencrabs_original
+  - opencrabs_h1_docs
+  - opencrabs_h2_fuzzy
+  - opencrabs_h3_collision
+  - baseline
+models:
+  - minimax-m2.7
+case_sets:
+  - hashline_hypotheses

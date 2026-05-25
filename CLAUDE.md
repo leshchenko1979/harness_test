@@ -1,83 +1,63 @@
-# agent-eval-matrix — LLM agent eval harness
+# Gategrid
 
-**User-facing pitch and quick start:** [README.md](README.md) (framework-first; bundled `experiments/` content is examples only).
+**Product:** [Gategrid](docs/roadmap/README-pitch-draft.md) — matrix eval runner with git-native CI gates.
 
-## Purpose
+**User-facing pitch:** [README.md](README.md). Roadmap: [docs/roadmap/v1-implementation-checklist.md](docs/roadmap/v1-implementation-checklist.md).
 
-Matrix evals over **cases** (YAML) × **tool sets** (YAML) × **models** (YAML). Matrices under `experiments/matrices/` declare the runnable cross-product; tool sets hold `system_prompt` + `tools:` paths; each `.py` under `tooling/` exports one tool function.
-
-## Run locally
-
-**Setup (once, or when lock/deps change):** `uv sync --extra dev` — creates/reuses `.venv` from `uv.lock`. **Never** run `python3 -m venv`; re-sync only when `uv.lock` or `pyproject.toml` changes.
+## Setup
 
 ```bash
 uv sync --extra dev
-# Demo (no API key): mocked model, 1×1 matrix
-uv run python -m agent_eval_matrix.matrix run --demo
-uv run python -m agent_eval_matrix.matrix run   # default: demo.yaml
-
-# Real evals (.env: MINIMAX_API_KEY)
-uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/smoke.yaml
-uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/full.yaml  # CI runs this
-uv run python -m agent_eval_matrix.evals run --case add_docstring --tool-set baseline
-uv run python -m agent_eval_matrix.matrix run --variant strict/verbose/minimax-m2.7
+gategrid --version
+gategrid validate --matrix examples/gategrid/matrices/smoke.yaml
+gategrid run --matrix examples/gategrid/matrices/smoke.yaml
+pytest tests/test_gategrid_phase0.py tests/test_gategrid_phase1.py \
+  tests/test_gategrid_phase2.py tests/test_gategrid_phase3.py
 ```
 
-After `source .venv/bin/activate`, omit the `uv run` prefix.
+For hashline / LLM dogfood: `uv sync --extra dev --extra pydantic-ai`.
 
-## Layout
+Artifacts live under `.gategrid/` (`GATEGRID_HOME` overrides). ADRs: [docs/adr/](docs/adr/). **Coding principles:** [CODE.md](CODE.md) — reread before implementation (after plan approval); update after post-impl review ([implementation workflow](.cursor/rules/gategrid-phase-workflow.mdc)).
 
-- `experiments/tool_sets/` — agent prompts + tool path lists (YAML only bundling)
-- `experiments/case_sets/` — named case lists
-- `experiments/models/` — model presets (`provider`, `model_name`, `api_key_env`, …)
-- `experiments/matrices/` — runnable matrix definitions (`tool_sets`, `models`, `cases`/`case_sets`)
-- `experiments/cases/` — case content (one YAML per case)
-- `experiments/tooling/reference/` — thin wrappers over `agent_eval_matrix.tools` (one tool per file)
-- `experiments/tooling/opencrabs/` — OpenCrabs-style tools (one tool per file)
-- `src/agent_eval_matrix/` — loader, sandbox, matrices resolver, matrix CLI
+## In-repo eval tree (`evals/`)
 
-## Tooling rules
+Dogfood layout for OpenCrabs hashline (Spike C). Not part of `pip install gategrid`; use `--root evals` or `GATEGRID_EVAL_ROOT=evals`.
 
-- **No** `SYSTEM_PROMPT`, `TOOLS`, or `register(agent)` bundles in `.py` files.
-- **Reference tools**: `tooling/reference/*.py` → `agent_eval_matrix.tools`.
-- **OpenCrabs tools**: `tooling/opencrabs/*.py`; composed via `tool_sets/opencrabs_original.yaml`.
+```bash
+gategrid validate --matrix evals/matrices/hashline-smoke.yaml --root evals
+gategrid run --matrix evals/matrices/hashline-smoke.yaml --root evals
+pytest tests/test_gategrid_spike_c.py tests/test_gategrid_file_edit_batteries.py
+```
 
-## Paths
+| Path | Role |
+| ---- | ---- |
+| `evals/matrices/` | Runnable matrices (`hashline-smoke`, `hashline-gate`, `hashline-bench`, …) |
+| `evals/profiles/` | `runtime_adapter` + `data.system_prompt` / `data.tools` |
+| `evals/models/` | Model presets (`provider`, `model_name`, `api_key_env`, …) |
+| `evals/cases/` | `@case` registration + YAML case bodies |
+| `evals/tooling/opencrabs/` | OpenCrabs-style tools (one tool per file) |
+| `evals/adapters/` | `file_edit` runtime adapter |
 
-- Models should use **workspace-relative** paths (`app.py`).
-- `agent_eval_matrix.sandbox` canonicalizes macOS `/private/var` vs `/var` and accepts absolutes inside the workspace.
+**Tooling rules:** No `SYSTEM_PROMPT`, `TOOLS`, or `register(agent)` bundles in `.py` files. Paths in cases are workspace-relative.
 
-## Models
+## Examples
 
-- Presets in `experiments/models/*.yaml` (registry key = filename stem).
-- Matrix `models` lists preset stems (e.g. `minimax-m2.7`).
-- Providers: `openai` (default install), `anthropic`, `google` (optional extras in pyproject.toml).
-- Per-preset env overrides: `{PREFIX}_MODEL`, `{PREFIX}_BASE_URL` where prefix is derived from `api_key_env` (e.g. `MINIMAX_API_KEY` → `MINIMAX_MODEL`).
+| Path | Role |
+| ---- | ---- |
+| `examples/gategrid/` | Minimal Gategrid smoke (mock) |
+| `examples/file_edit/` | File-edit contrib sample |
 
 ## Hashline hypothesis matrix
 
-Isolated OpenCrabs variants (H1 doc fix, H2 fuzzy `str_replace`, H3 empty-hash collisions) vs `opencrabs_original` and `baseline`:
+5 profile variants × 10 cases (4 small + 6 large). Pass/fail = file content match via `contrib/file_edit`.
 
 ```bash
-uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
+gategrid run --matrix evals/matrices/hashline-bench.yaml --root evals
 ```
 
-**10 cases** (4 small + 6 large ~100–150 lines): indent traps, ambiguous replace, hash collisions, docstring insert, rename — **50 matrix runs** (5 variants × 10 cases).
-
-Pass/fail is still **file content match** only; `print_summary` adds hypothesis deltas, H4 pass rates by `language:python` / `language:yaml`, and `size:large` vs small buckets.
-
-**Report for OpenCrabs upstream:** [docs/hashline_hypothesis_report.md](docs/hashline_hypothesis_report.md) (prose), [docs/hashline_hypothesis_report.ipynb](docs/hashline_hypothesis_report.ipynb) (charts). Index: [docs/README.md](docs/README.md). Regenerate figures: `uv sync --extra report` then `uv run python docs/_build_report_viz.py`.
-
-## Run metrics (comparison only; pass/fail = file match)
-
-- **turns** — `RunUsage.requests` from `agent.run()` (LLM rounds, not `tool_calls`)
-- **tokens_spent** — sum of canonical `RunUsage` token fields + `details` (not `total_tokens`)
-- **tool_failures** — sum of `metrics` keys ending in `_failures` from reference tools
-- **duration_ms** — pydantic-evals `task_duration` on the report row
-- Raw span/tool counters remain in `CaseResult.metrics` for debugging
+**Report:** [docs/hashline_hypothesis_report.md](docs/hashline_hypothesis_report.md). Regenerate figures: `uv sync --extra report` then `uv run python docs/_build_report_viz.py` (set `GATEGRID_REPORT_JSON` to a `.gategrid/reports/*.json` from a bench run).
 
 ## Observability
 
-- Default: stdout + `reports/*.json`
-- Logfire: `LOGFIRE_TOKEN`, `send_to_logfire='if-token-present'`
-- `--trace` → `reports/traces/*.jsonl`
+- Default: stdout + `.gategrid/reports/`
+- Logfire: `LOGFIRE_TOKEN`, `send_to_logfire='if-token-present'` on pydantic-ai runs

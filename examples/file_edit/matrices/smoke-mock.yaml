@@ -1,0 +1,7 @@
+name: smoke-mock
+profiles:
+  - baseline
+models:
+  - mock
+cases:
+  - indent_collision

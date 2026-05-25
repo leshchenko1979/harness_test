@@ -1,0 +1,7 @@
+name: parity-indent_collision
+profiles:
+  - opencrabs_original
+models:
+  - minimax-m2.7
+cases:
+  - indent_collision

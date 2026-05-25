@@ -1,0 +1,118 @@
+{
+  "$defs": {
+    "Message": {
+      "properties": {
+        "role": {
+          "enum": [
+            "system",
+            "user",
+            "assistant",
+            "tool"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "tool_call_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Call Id"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "Message",
+      "type": "object"
+    }
+  },
+  "description": "Agent-shaped output from a runtime (Phase 2+ executor).",
+  "properties": {
+    "messages": {
+      "items": {
+        "$ref": "#/$defs/Message"
+      },
+      "title": "Messages",
+      "type": "array"
+    },
+    "metrics": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "title": "Metrics",
+      "type": "object"
+    },
+    "evaluators": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "additionalProperties": true,
+            "type": "object"
+          }
+        ]
+      },
+      "title": "Evaluators",
+      "type": "object"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    }
+  },
+  "title": "RunArtifact",
+  "type": "object"
+}

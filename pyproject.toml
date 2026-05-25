@@ -3,27 +3,29 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agent-eval-matrix"
-version = "0.1.0"
-description = "Matrix evaluation harness for sandboxed LLM agents"
+name = "gategrid"
+version = "0.0.0"
+description = "Matrix evaluation harness with CI gating and git-native baselines"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pydantic-ai-slim[openai,logfire]>=1.0.0",
-    "pydantic-evals>=1.0.0",
     "pydantic>=2.10",
     "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
 ]
 
 [project.scripts]
-agent-eval-matrix = "agent_eval_matrix.matrix:main"
-agent-eval = "agent_eval_matrix.evals_cli:main"
+gategrid = "gategrid.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["gategrid*"]
+
+[tool.setuptools.package-data]
+gategrid = ["contrib/file_edit/bundled/**/*.yaml"]
 
 [project.optional-dependencies]
+pydantic-ai = ["pydantic-ai-slim[openai,logfire]>=1.0.0"]
 anthropic = ["pydantic-ai-slim[anthropic]"]
 google = ["pydantic-ai-slim[google]"]
 all-providers = ["pydantic-ai-slim[openai,anthropic,google,logfire]"]

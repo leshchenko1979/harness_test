@@ -1,0 +1,18 @@
+name: opencrabs_h2_fuzzy
+runtime_adapter: adapters.file_edit:PydanticAiFileEditAdapter
+data:
+  system_prompt: |
+    You are a file editing agent using OpenCrabs-style tools with fuzzy str_replace.
+
+    Rules:
+    - Paths are workspace-relative (e.g. app.py) or absolute paths inside the workspace.
+    - Use ls, glob, or grep to explore before editing.
+    - Use read_file to inspect files before str_replace_fuzzy.
+    - str_replace_fuzzy replaces one occurrence; tolerates minor whitespace differences.
+    - Only modify files inside the workspace.
+  tools:
+    - tooling/opencrabs/read_file.py
+    - tooling/opencrabs/ls.py
+    - tooling/opencrabs/glob.py
+    - tooling/opencrabs/grep.py
+    - tooling/fuzzy/str_replace_fuzzy.py

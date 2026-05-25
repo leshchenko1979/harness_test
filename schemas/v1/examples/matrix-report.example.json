@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "commit_sha": "local",
+  "timestamp": "2026-05-24T12:00:00+00:00",
+  "matrix_path": "evals/matrices/telegram-mcp-gate.yaml",
+  "matrix_name": "telegram-mcp-gate",
+  "fingerprint": {
+    "matrix_name": "telegram-mcp-gate",
+    "profile_ids": [
+      "telegram-mcp-stdio"
+    ],
+    "case_ids": [
+      "read_saved",
+      "search_alice"
+    ]
+  },
+  "sampling": {
+    "sampled": true,
+    "seed": 0,
+    "max_cells": 30,
+    "share": 0.25,
+    "always_include_tags": [],
+    "planned_cells": 4,
+    "executed_cells": 2,
+    "skipped_cells": []
+  },
+  "run_max_retries": 1,
+  "cells": [
+    {
+      "key": {
+        "case_id": "search_alice",
+        "profile_id": "telegram-mcp-stdio",
+        "model_id": "gpt-4o-mini"
+      },
+      "passed": true,
+      "tags": [
+        "smoke",
+        "mcp"
+      ],
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "passed": true,
+          "artifact": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Search my contacts for Alice",
+                "name": null,
+                "tool_call_id": null
+              },
+              {
+                "role": "assistant",
+                "content": "Found 1 contact matching Alice.",
+                "name": null,
+                "tool_call_id": null
+              }
+            ],
+            "metrics": {
+              "mcp_errors": 0,
+              "tool_call_count": 1
+            },
+            "evaluators": {},
+            "error": null
+          },
+          "error": null,
+          "duration_ms": 1200.0
+        }
+      ],
+      "flaky_suspect": false,
+      "duration_ms": 1200.0,
+      "metrics": {
+        "expected_tool": "search_contacts",
+        "turns": 2,
+        "tokens_spent": 800
+      },
+      "error": null
+    },
+    {
+      "key": {
+        "case_id": "read_saved",
+        "profile_id": "telegram-mcp-stdio",
+        "model_id": "gpt-4o-mini"
+      },
+      "passed": true,
+      "tags": [
+        "smoke"
+      ],
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "passed": true,
+          "artifact": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Read saved messages",
+                "name": null,
+                "tool_call_id": null
+              }
+            ],
+            "metrics": {
+              "mcp_errors": 0,
+              "tool_call_count": 1
+            },
+            "evaluators": {},
+            "error": null
+          },
+          "error": null,
+          "duration_ms": 900.0
+        }
+      ],
+      "flaky_suspect": false,
+      "duration_ms": 900.0,
+      "metrics": {
+        "turns": 1,
+        "tokens_spent": 400
+      },
+      "error": null
+    }
+  ],
+  "overall": {
+    "pass_rate": 1.0,
+    "duration_ms_mean": 1050.0,
+    "cell_count": 2,
+    "metrics": {
+      "turns": 1.5,
+      "tokens_spent": 600.0
+    }
+  },
+  "pass_rate": 1.0
+}

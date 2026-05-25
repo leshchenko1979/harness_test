@@ -1,0 +1,267 @@
+{
+  "$defs": {
+    "GateConfig": {
+      "properties": {
+        "baseline": {
+          "title": "Baseline",
+          "type": "string"
+        },
+        "regression": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GateRegression"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "limits": {
+          "additionalProperties": {
+            "$ref": "#/$defs/GateLimits"
+          },
+          "description": "Keys: overall, like_for_like",
+          "title": "Limits",
+          "type": "object"
+        }
+      },
+      "required": [
+        "baseline"
+      ],
+      "title": "GateConfig",
+      "type": "object"
+    },
+    "GateLimits": {
+      "properties": {
+        "pass_rate_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pass Rate Min"
+        },
+        "metric_mean_min": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Metric Mean Min",
+          "type": "object"
+        },
+        "metric_mean_max": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Metric Mean Max",
+          "type": "object"
+        },
+        "max_regressed_cells": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Regressed Cells"
+        }
+      },
+      "title": "GateLimits",
+      "type": "object"
+    },
+    "GateRegression": {
+      "properties": {
+        "baseline": {
+          "title": "Baseline",
+          "type": "string"
+        },
+        "bounds": {
+          "additionalProperties": {
+            "$ref": "#/$defs/RegressionBounds"
+          },
+          "description": "Keys: overall, like_for_like",
+          "title": "Bounds",
+          "type": "object"
+        }
+      },
+      "required": [
+        "baseline"
+      ],
+      "title": "GateRegression",
+      "type": "object"
+    },
+    "RegressionBounds": {
+      "properties": {
+        "pass_rate_min_delta": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pass Rate Min Delta"
+        },
+        "metric_mean_min_delta": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Metric Mean Min Delta",
+          "type": "object"
+        },
+        "metric_mean_max_delta": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Metric Mean Max Delta",
+          "type": "object"
+        },
+        "max_regressed_cells": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Regressed Cells"
+        }
+      },
+      "title": "RegressionBounds",
+      "type": "object"
+    },
+    "RunConfig": {
+      "properties": {
+        "max_retries": {
+          "default": 0,
+          "title": "Max Retries",
+          "type": "integer"
+        },
+        "sample": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SampleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "RunConfig",
+      "type": "object"
+    },
+    "SampleConfig": {
+      "properties": {
+        "max_cells": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Cells"
+        },
+        "share": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Share"
+        },
+        "seed": {
+          "default": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "always_include_tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Always Include Tags",
+          "type": "array"
+        }
+      },
+      "title": "SampleConfig",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Name"
+    },
+    "cases": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Cases",
+      "type": "array"
+    },
+    "case_sets": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Case Sets",
+      "type": "array"
+    },
+    "profiles": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Profiles",
+      "type": "array"
+    },
+    "models": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Models",
+      "type": "array"
+    },
+    "gate": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GateConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "run": {
+      "$ref": "#/$defs/RunConfig"
+    }
+  },
+  "title": "MatrixConfig",
+  "type": "object"
+}

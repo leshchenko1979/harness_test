@@ -1,0 +1,17 @@
+name: hashline-gate
+profiles:
+  - opencrabs_original
+models:
+  - minimax-m2.7
+cases:
+  - indent_collision
+  - ambiguous_replace
+  - whitespace_trap
+  - whitespace_trap_yaml
+gate:
+  baseline: opencrabs_original
+  regression:
+    baseline: opencrabs_original
+    bounds:
+      overall:
+        pass_rate_min_delta: -0.05

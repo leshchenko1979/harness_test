@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -10,7 +12,28 @@ import numpy as np
 import pandas as pd
 
 REPO = Path(__file__).resolve().parents[1]
-REPORT_JSON = REPO / "reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json"
+
+
+def _resolve_report_json() -> Path:
+    if env := os.environ.get("GATEGRID_REPORT_JSON"):
+        return Path(env)
+    home = Path(os.environ.get("GATEGRID_HOME", REPO / ".gategrid"))
+    reports = home / "reports"
+    if reports.is_dir():
+        candidates = sorted(
+            reports.glob("*_matrix.json"), key=lambda p: p.stat().st_mtime
+        )
+        if candidates:
+            return candidates[-1]
+    print(
+        "Set GATEGRID_REPORT_JSON to a Gategrid matrix report "
+        "(e.g. from gategrid run --matrix evals/matrices/hashline-bench.yaml --root evals).",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+
+REPORT_JSON = _resolve_report_json()
 FIGURES = Path(__file__).resolve().parent / "figures"
 
 # Hypothesis order: original → H1 → H2 → H3 → H4 reference

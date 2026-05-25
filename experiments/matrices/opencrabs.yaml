@@ -1,7 +1,0 @@
-tool_sets:
-  - opencrabs_original
-models:
-  - minimax-m2.7
-cases:
-  - rename_symbol
-  - ambiguous_replace

@@ -1,0 +1,53 @@
+name: Gategrid
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Pytest
+        run: uv run pytest tests/
+
+      - name: Validate smoke matrix
+        run: uv run gategrid validate --matrix examples/gategrid/matrices/smoke.yaml
+
+      - name: Run smoke matrix (mock)
+        env:
+          GATEGRID_HOME: ${{ github.workspace }}/.gategrid-ci
+        run: uv run gategrid run --matrix examples/gategrid/matrices/smoke.yaml
+
+  hashline-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --extra dev --extra pydantic-ai
+
+      - name: Hashline smoke (mock)
+        env:
+          GATEGRID_HOME: ${{ github.workspace }}/.gategrid-ci
+          GATEGRID_EVAL_ROOT: evals
+        run: uv run gategrid run --matrix evals/matrices/hashline-smoke.yaml --root evals

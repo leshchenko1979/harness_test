@@ -1,0 +1,143 @@
+{
+  "$defs": {
+    "GateLimits": {
+      "properties": {
+        "pass_rate_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pass Rate Min"
+        },
+        "metric_mean_min": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Metric Mean Min",
+          "type": "object"
+        },
+        "metric_mean_max": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Metric Mean Max",
+          "type": "object"
+        },
+        "max_regressed_cells": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Regressed Cells"
+        }
+      },
+      "title": "GateLimits",
+      "type": "object"
+    },
+    "GateRegression": {
+      "properties": {
+        "baseline": {
+          "title": "Baseline",
+          "type": "string"
+        },
+        "bounds": {
+          "additionalProperties": {
+            "$ref": "#/$defs/RegressionBounds"
+          },
+          "description": "Keys: overall, like_for_like",
+          "title": "Bounds",
+          "type": "object"
+        }
+      },
+      "required": [
+        "baseline"
+      ],
+      "title": "GateRegression",
+      "type": "object"
+    },
+    "RegressionBounds": {
+      "properties": {
+        "pass_rate_min_delta": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pass Rate Min Delta"
+        },
+        "metric_mean_min_delta": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Metric Mean Min Delta",
+          "type": "object"
+        },
+        "metric_mean_max_delta": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Metric Mean Max Delta",
+          "type": "object"
+        },
+        "max_regressed_cells": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Regressed Cells"
+        }
+      },
+      "title": "RegressionBounds",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "baseline": {
+      "title": "Baseline",
+      "type": "string"
+    },
+    "regression": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GateRegression"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "limits": {
+      "additionalProperties": {
+        "$ref": "#/$defs/GateLimits"
+      },
+      "description": "Keys: overall, like_for_like",
+      "title": "Limits",
+      "type": "object"
+    }
+  },
+  "required": [
+    "baseline"
+  ],
+  "title": "GateConfig",
+  "type": "object"
+}

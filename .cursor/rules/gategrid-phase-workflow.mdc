@@ -1,0 +1,61 @@
+---
+description: Required plan-first workflow for any implementation request (steps 1–6)
+alwaysApply: true
+---
+
+# Implementation workflow
+
+**Any user suggestion that involves code changes** follows steps 1–6. **User reviews the plan only** (step 3), not implementation diffs.
+
+**Start:** If not already in Plan mode, **switch to Plan mode** before step 1. Do not implement until step 3 approval.
+
+## Steps
+
+| Step | Mode | Action |
+| ---- | ---- | ------ |
+| **1** | Plan | Draft plan: scope, files, exit commands, clean-break checks. Link checklist rows when relevant. Store in `~/.cursor/plans/<task>_*.md` only (not in-repo). |
+| **2** | Plan | Pre-implementation subagent review (`code-reviewer`, readonly): simplify scope and clarify the plan. Revise plan; **do not code**. Leave **comprehensible** text — see **Step 2 — simplicity** below. |
+| **3** | Plan → Agent | **HIIL:** Present plan; wait for user command. **User reviews the plan only** — not implementation diffs. |
+| **4** | Agent | Run exit tests/commands. Fix before step 5. Proceed without asking for user confirmation. |
+| **5** | Agent | Post-implementation subagent review vs approved plan + clean break. |
+| **6** | Agent | Fix blocking findings. Re-test. Merge non-obvious lessons into [CODE.md](CODE.md) (topic sections; no new "Phase N" blocks). Mark checklist `[x]` when applicable. Update [CLAUDE.md](CLAUDE.md) if needed. |
+
+## Step 3 — HIIL loop
+
+At step 3, stop and wait for the user.
+
+| User response | Next step |
+| ------------- | --------- |
+| **Feedback or change request** | **→ step 2** — analyze comments (see below), **incrementally revise** the plan, re-run pre-impl review. Do not implement yet. Preserve the prior version as **previous plan** — see **Step 2 — simplicity**. |
+| **Explicit approval** | **Reread [CODE.md](CODE.md)**. Switch to Agent mode. Implement (then step 4). |
+
+Repeat **2 → 3** until the user explicitly approves.
+
+## Step 2 — simplicity
+
+Pre-impl review aims for **clearer, smaller scope** — not telegram-style compression.
+
+After revision, the plan must still be **human-readable at step 3**: full sentences; explicit scope, files, and exit commands; enough rationale that a reader can approve or push back. **Brevity must not become nonsense** — if trimming removes needed context or leaves ambiguous steps, keep or rewrite instead of shrinking.
+
+**Repeat step 2 (after HIIL feedback):** revise **incrementally** — do not replace the plan with a short summary that drops whole sections. Keep the last approved draft as **previous plan** (same file, clearly labeled section or revision note). The new draft must retain all still-valid scope, files, exits, and decisions from the previous plan; changes should be explicit (what changed and why). **Never omit huge chunks** and point at the previous plan as a substitute — the current plan presented at step 3 must stand alone.
+
+## User plan comments
+
+Feedback at step 3 is input, not automatic requirements. **Analyze** each comment against CODE.md, the checklist, ADRs, and the current codebase. Accept and update the plan, push back with tradeoffs, or propose a smaller alternative **before** coding. Record substantive decisions in the plan or ADR.
+
+## Gates (same weight as tests)
+
+- Step 2: pre-implementation review (scope, exits; drop speculative work; plan stays comprehensible; repeat reviews preserve previous plan, no chunk deletion)
+- Step 3: explicit user approval + reread CODE.md before coding
+- Step 5: diff vs plan; no legacy creep
+- Step 6: merge durable guardrails → CODE.md
+
+## After close
+
+Optionally remind the user they can run `/summarize` to compact context (user-initiated; not an agent step).
+
+## Clean break reminders
+
+- Core = `@case` + `RuntimeAdapter` + `@evaluator`; file-edit in `contrib`, not core
+- Artifacts under `.gategrid/` only; no legacy bridges (`tool_sets`, pydantic-evals, dual report formats)
+- See checklist [Clean break policy](docs/roadmap/v1-implementation-checklist.md#clean-break-policy-v1--no-legacy-path)

@@ -1,0 +1,7 @@
+name: parity-add_docstring_large
+profiles:
+  - opencrabs_original
+models:
+  - minimax-m2.7
+cases:
+  - add_docstring_large

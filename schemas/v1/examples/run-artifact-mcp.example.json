@@ -1,0 +1,22 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Search my contacts for Alice",
+      "name": null,
+      "tool_call_id": null
+    },
+    {
+      "role": "assistant",
+      "content": "Found 1 contact matching Alice.",
+      "name": null,
+      "tool_call_id": null
+    }
+  ],
+  "metrics": {
+    "mcp_errors": 0,
+    "tool_call_count": 1
+  },
+  "evaluators": {},
+  "error": null
+}

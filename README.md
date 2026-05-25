@@ -1,289 +1,198 @@
-# LLM Agent Eval Harness
+# Gategrid
 
-**Matrix evaluation for sandboxed LLM agents** — compare tool stacks, system prompts, and models on YAML-defined tasks. Built on [pydantic-ai](https://ai.pydantic.dev/) and [pydantic-evals](https://github.com/pydantic/pydantic-evals).
+**Matrix evaluation for LLM agents — pytest for your cases, codecov for your regressions.**
 
-Each matrix run is `tool_sets × models × cases`, executed in an isolated workspace per case. Swap entire agent configurations without redeploying Python bundles.
+`pip install gategrid` · Python ≥3.11 · [Architecture](docs/roadmap/architecture-vision.md)
 
-### Try it in 60 seconds (no API key)
+**More:** [Extended product brief](docs/roadmap/README-pitch-draft.md) · [Battlecard](docs/roadmap/battlecard.md) · [Competitive landscape](docs/roadmap/competitive-landscape.md) · [v1 checklist](docs/roadmap/v1-implementation-checklist.md)
+
+---
+
+## The problem
+
+Building an agent is only half the work. You still need to know whether a new prompt, tool surface, model, or MCP server build **actually helps** — and whether yesterday’s change **broke** last week’s behavior on **your** stack.
+
+Most teams end up with:
+
+- One-off scripts that don’t compose
+- Benchmarks tied to a single agent framework
+- CI that runs evals but **doesn’t gate** regressions
+- Baselines that mix unrelated profiles or PR envs, so “pass rate vs main” lies
+
+**Gategrid** is the shared runner: you bring cases, runtime, and scorers; it runs the grid, stores results under `.gategrid/`, and fails CI when **your** gated profile regresses.
+
+---
+
+## What it is (and isn’t)
+
+| It is | It isn’t |
+| ----- | -------- |
+| A **matrix runner** (`cases × profiles × models`) | An agent framework |
+| **pytest-shaped** plugins (your code, our infra) | A hosted eval SaaS |
+| **Single-profile CI gates** + one baseline file per lane | A mandatory multi-profile fleet baseline |
+| **CI-first** (`run`, `gate`, `baseline update` on `main` only) | Direct MCP protocol tests without an LLM |
+| **Git-native golden runs** (codecov-style) | promptfoo / LangSmith-style cloud baselines only |
+
+Think **pytest** plus **codecov-style** compare to a stored golden run — for one stack at a time in CI, with optional **benchmark** matrices when you want to compare many profiles on the same cases.
+
+---
+
+## Gate vs benchmark (two jobs)
+
+| | **Gate (CI default)** | **Benchmark (optional)** |
+| - | --------------------- | ------------------------ |
+| **Question** | Did **our** stack regress? | Which stack is best? |
+| **Profiles per run** | **One** per gate matrix | Many (A/B tool surfaces) |
+| **Baseline** | `.gategrid/baselines/<profile>.json` | Report only; no PR gate |
+| **`baseline update`** | **`main` / nightly** only, full case grid | Not used for gating |
+
+PR and `main` use the **same profile** and the **same baseline file**. Overall and like-for-like comparisons stay honest. Full gate YAML, sampling, and CI flows: [README-pitch-draft.md](docs/roadmap/README-pitch-draft.md).
+
+---
+
+## You write · we run
+
+```mermaid
+flowchart LR
+  subgraph yours [Your repo]
+    Cases["@case + fixtures"]
+    Runtime[RuntimeAdapter or your loop]
+    Eval["@evaluator gate / metric"]
+    Matrix[matrix YAML files]
+  end
+  subgraph ours [Gategrid]
+    Grid[Matrix executor]
+    Report[".gategrid/"]
+    Gate[gate + baseline]
+  end
+  Matrix --> Grid
+  Cases --> Grid
+  Runtime --> Grid
+  Grid --> Eval
+  Eval --> Report
+  Report --> Gate
+```
+
+| You own | Framework owns |
+| ------- | ---------------- |
+| Cases, runtime, evaluators | Grid expansion, retries, sampling, traces |
+| **Several matrix files** per repo (`smoke`, `mcp-gate`, `benchmark`, …) | Reports, **one baseline file per gate lane** |
+| **One profile** in each gate matrix | `gategrid gate`, `baseline update` rules |
+
+**Secrets:** values in process env only; YAML names `api_key_env` / `env_pass_through`, never secret values.
+
+---
+
+## Why teams use it
+
+- **One profile per gate** — PR and `main` compare against the same `baselines/<profile>.json`, not a mixed fleet baseline.
+- **CI that means something** — PR: `run` → `gate` (never `baseline update` on PR). `main`: `run` → `gate` → `baseline update`.
+- **Three layers of pass** — cell (`gate` evaluators), regression (vs baseline), optional hard limits on this run.
+- **Cost control** — optional PR sampling shrinks how many cases run without changing the gated profile.
+- **Bring your stack** — `RuntimeAdapter`, optional `gategrid[pydantic-ai]`, optional [contrib](src/gategrid/contrib/README.md) helpers (file-edit sandbox, LLM-judge base class).
+
+---
+
+## Try it in 60 seconds (no API key)
+
+```bash
+git clone https://github.com/leshchenko1979/gategrid.git
+cd gategrid
+uv sync --extra dev
+gategrid validate --matrix examples/gategrid/matrices/smoke.yaml
+gategrid run --matrix examples/gategrid/matrices/smoke.yaml
+```
+
+Artifacts land under `.gategrid/reports/` and `.gategrid/baselines/` (override with `GATEGRID_HOME`).
+
+---
+
+## Example (Python-first)
+
+```python
+from gategrid import case, evaluator
+
+@case(tags=["smoke"])
+async def create_event(profile, ctx):
+    return await run_my_agent(
+        mcp=profile.mcp,
+        user_turns=["Create a standup tomorrow 9am"],
+        model=profile.model,
+    )
+
+@evaluator(tags=["gate"])
+def event_created(artifact, ctx):
+    assert artifact.metrics.get("calendar_write_ok")
+```
+
+```bash
+export OPENAI_API_KEY=...
+gategrid run --matrix matrices/mcp-gate.yaml
+gategrid gate
+```
+
+---
+
+## Case study: OpenCrabs hashline
+
+External evaluation of OpenCrabs-style file-editing tools (hashline protocol, fuzzy replace hypotheses, vs a simplified reference stack).
+
+| Artifact | Path |
+| -------- | ---- |
+| Report | [docs/hashline_hypothesis_report.md](docs/hashline_hypothesis_report.md) |
+| Charts | [docs/hashline_hypothesis_report.ipynb](docs/hashline_hypothesis_report.ipynb) |
+| In-repo repro | [evals/](evals/) matrices and profiles — see [CLAUDE.md](CLAUDE.md) |
+
+---
+
+## Who it’s for
+
+| Role | Typical use |
+| ---- | ----------- |
+| **MCP / tool authors** | Gate one candidate profile on shared cases before release |
+| **Agent engineers** | Same gate matrix locally and in CI |
+| **Platform / QA** | PR `gate` vs `baselines/<profile>.json`; `main` updates baseline |
+| **Researchers** | Optional `benchmark` matrix with many profiles — reports only |
+
+---
+
+## How we compare
+
+Gategrid is a **thin git-native regression gate** for one agent stack at a time — not a hosted experiment browser or red-team suite.
+
+| | Gategrid | [promptfoo](https://github.com/promptfoo/promptfoo) | [DeepEval](https://github.com/confident-ai/deepeval) |
+| - | -------- | --------------------------------------------------- | ---------------------------------------------------- |
+| **CI regression** | One profile, **git** baseline file | Pass-rate / Action compare; cloud share common | Pytest pass; regression UI → Confident AI |
+| **Agent runtime** | Pluggable `RuntimeAdapter` | Providers + custom JS | Bring your app |
+| **Matrix** | Gate vs benchmark personas | Prompt × provider matrix | Datasets / metrics |
+
+Detail: [docs/roadmap/battlecard.md](docs/roadmap/battlecard.md) · [docs/roadmap/competitive-landscape.md](docs/roadmap/competitive-landscape.md).
+
+---
+
+## Install
+
+```bash
+pip install gategrid
+pip install "gategrid[pydantic-ai]"   # optional LLM runtime
+```
+
+Python ≥3.11. Secrets via environment only.
+
+---
+
+## Contributing and development
+
+Monorepo: [src/gategrid/](src/gategrid/) (framework), [examples/gategrid/](examples/gategrid/) (smoke), [evals/](evals/) (dogfood). Operator setup, tests, and hashline matrices: [CLAUDE.md](CLAUDE.md). Coding principles: [CODE.md](CODE.md).
 
 ```bash
 uv sync --extra dev
-uv run python -m agent_eval_matrix.matrix run --demo
+pytest tests/test_gategrid_phase0.py tests/test_gategrid_phase1.py \
+  tests/test_gategrid_phase2.py tests/test_gategrid_phase3.py
 ```
 
-You should see a matrix summary and a report under [reports/](reports/). The default `matrix run` (no flags) uses the same demo matrix. For real LLM evals, add API keys per [Quick start](#quick-start) below.
+---
 
-## Why this exists
+## License
 
-- Agent comparisons do not scale as one-off scripts — you need a **tool × model × task** grid.
-- “Looks fine in the demo” does not catch regressions when prompts, tools, or models change.
-- Tool surfaces and instructions should be **data** (YAML), not tangled into import-time Python.
-
-## Who it's for
-
-
-| Audience                  | Typical goal                                                |
-| ------------------------- | ----------------------------------------------------------- |
-| Tool / protocol designers | Compare full agent stacks (API shape, tool count, behavior) |
-| Agent / prompt engineers  | A/B prompts and tool subsets on the same cases              |
-| Model / provider teams    | Same stack, different models or endpoints                   |
-| Platform / QA             | Pin a matrix + case pack as a regression gate in CI         |
-| Researchers               | Tag cases, run hypothesis matrices, extend reporting        |
-| Cost / efficiency owners  | Compare turns, tokens, tool failures, and latency           |
-| Debuggers                 | Reproduce one matrix cell quickly                           |
-
-
-## What you can do
-
-**Compare tool surfaces** — define `tool_sets` that list per-tool modules and a `system_prompt`; the matrix runs every combination you declare.
-
-**Compare models** — reference model preset stems from [experiments/models/](experiments/models/) in your matrix `models:` list, or filter to one cell with `--variant <tool-set>/<model-preset>`.
-
-**Compare tasks** — group cases in `case_sets` or list them inline; each case supplies a natural-language `instruction`, sandbox seed content, and expected outcome.
-
-**Smoke one cell** — `agent_eval_matrix.evals run --case <name> --tool-set <tool-set> --model <preset>` without running the full grid.
-
-**Gate CI** — run a pinned matrix on `workflow_dispatch` (or re-enable push/PR), upload JSON reports as artifacts, optional Logfire traces.
-
-Commands use placeholders below; bundled names under [experiments/](experiments/) are **examples only**.
-
-
-| Workflow                   | Command                                                                                   |
-| -------------------------- | ----------------------------------------------------------------------------------------- |
-| Demo (no API key)          | `uv run python -m agent_eval_matrix.matrix run --demo`                                    |
-| Default run (demo matrix)  | `uv run python -m agent_eval_matrix.matrix run`                                           |
-| Smoke (2 cells)            | `uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/smoke.yaml` |
-| Full benchmark (20 cells)  | `uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/full.yaml` |
-| Custom matrix              | `uv run python -m agent_eval_matrix.matrix run --matrix path/to/matrix.yaml`            |
-| One variant                | `uv run python -m agent_eval_matrix.matrix run --variant <tool-set>/<model-preset>`     |
-| One case (no API key)      | `uv run python -m agent_eval_matrix.evals run --case hello_world --tool-set demo --model mock` |
-| One case                   | `uv run python -m agent_eval_matrix.evals run --case <name> --tool-set <tool-set> --model <preset>` |
-| Debug trace                | add `--trace`                                                                             |
-
-
-## How it works
-
-```mermaid
-flowchart TB
-  subgraph inputs [YAML under experiments]
-    Cases[cases]
-    CaseSets[case_sets]
-    ToolSets[tool_sets]
-    MatrixFile[matrices]
-  end
-  subgraph runner [agent_eval_matrix.matrix]
-    Sandbox[isolated workspace per case]
-    Agent[pydantic-ai agent]
-    Eval[evaluators]
-  end
-  subgraph outputs [Outputs]
-    JSON[reports matrix JSON]
-    Stdout[print_summary]
-    Trace[JSONL traces optional]
-    Logfire[Logfire optional]
-  end
-  Cases --> MatrixFile
-  CaseSets --> MatrixFile
-  ToolSets --> MatrixFile
-  MatrixFile --> runner
-  runner --> Sandbox --> Agent --> Eval
-  Eval --> JSON
-  Eval --> Stdout
-  runner --> Trace
-  runner --> Logfire
-```
-
-
-
-**Matrix axes** (all defined in YAML):
-
-
-| Axis                        | Where                                           |
-| --------------------------- | ----------------------------------------------- |
-| Tool surface + instructions | `tool_sets/*.yaml` → `tools:` + `system_prompt` |
-| Model                       | `models/*.yaml` + `matrices/*.yaml` → `models:` |
-| Tasks                       | `cases/*.yaml` via `cases:` or `case_sets:`     |
-
-
-**Scoring:** pass/fail is driven by evaluators in [src/agent_eval_matrix/evaluators.py](src/agent_eval_matrix/evaluators.py). The **example case pack** in this repo uses exact primary-file content match (`FileContentMatch`). Auxiliary evaluators record tool discipline and efficiency; they support comparison but do not override pass/fail today. Forks can plug in different evaluators or case shapes.
-
-**Sandbox:** each case runs in a fresh temp directory. Agents should use workspace-relative paths; [agent_eval_matrix.sandbox](src/agent_eval_matrix/sandbox.py) normalizes paths inside the workspace (including macOS `/private/var` vs `/var`).
-
-## Observability
-
-
-| Layer            | Enable          | What you get                                                                                         |
-| ---------------- | --------------- | ---------------------------------------------------------------------------------------------------- |
-| **Stdout**       | always          | Logs + `print_summary` (pass rate, per-variant averages)                                             |
-| **Local JSON**   | always          | `reports/{timestamp}_{commit_sha}_matrix.json` — full matrix [MatrixReport](src/agent_eval_matrix/models.py) |
-| **JSONL traces** | `--trace`       | `reports/traces/{run_id}.jsonl` — lightweight start/done events                                      |
-| **Logfire**      | `LOGFIRE_TOKEN` | pydantic-ai instrumentation; spans `eval/<variant>/<case>`; `send_to_logfire='if-token-present'`     |
-
-
-**Logfire:** add `LOGFIRE_TOKEN` to `.env` locally or as a GitHub Actions secret. View runs in the [Logfire](https://logfire.pydantic.dev/docs) UI.
-
-**Reports on GitHub:** the example workflow [.github/workflows/evals.yml](.github/workflows/evals.yml) uploads `reports/*.json` as an artifact (`eval-report-<sha>`, 90-day retention, `if: always()`). Download: **Actions** → workflow run → **Artifacts**. JSONL traces are **not** included in that glob. Set repo secrets to match your presets’ `api_key_env` names (the example workflow uses `MINIMAX_API_KEY` and optional `LOGFIRE_TOKEN`). The workflow is `workflow_dispatch` only until push/PR triggers are re-enabled.
-
-Compare runs across commits via artifact JSON; debug a single cell with `agent_eval_matrix.evals` and `--trace` without Logfire.
-
-## Quick start
-
-Tutorial names (`my_set`, `my_case`, …) are generic. See [Examples in this repository](#examples-in-this-repository) for bundled sample content.
-
-### 0. Install and optional demo
-
-Requires [uv](https://docs.astral.sh/uv/) and Python ≥3.11.
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh   # skip if uv is already installed
-
-uv sync --extra dev    # creates/reuses .venv from uv.lock
-cp .env.example .env
-```
-
-Re-run `uv sync --extra dev` only when `uv.lock` or `pyproject.toml` changes. Do not recreate `.venv` with `python3 -m venv`.
-
-Try the harness without keys: `uv run python -m agent_eval_matrix.matrix run --demo` (see [Try it in 60 seconds](#try-it-in-60-seconds-no-api-key) above).
-
-### 1. Add provider API keys
-
-The harness loads `.env` on every run. API keys stay out of YAML — matrices reference model **preset ids**, not secrets.
-
-```bash
-# Required: must match api_key_env in your model preset YAML (step 2)
-MY_PROVIDER_API_KEY=sk-...
-
-# Optional per-preset overrides (prefix from api_key_env, e.g. MY_PROVIDER_API_KEY → MY_PROVIDER_MODEL):
-# MY_PROVIDER_MODEL=my-model-id
-# MY_PROVIDER_BASE_URL=https://api.example.com/v1
-
-# Optional — see Observability
-LOGFIRE_TOKEN=
-```
-
-In CI, define the same names as GitHub Actions **secrets**.
-
-### 2. Configure models
-
-One YAML file per preset under `experiments/models/` (registry key = filename stem):
-
-`experiments/models/my-model.yaml`:
-
-```yaml
-provider: openai
-model_name: my-model-id
-base_url: https://api.example.com/v1
-api_key_env: MY_PROVIDER_API_KEY
-```
-
-
-| Field                           | Purpose                                                |
-| ------------------------------- | ------------------------------------------------------ |
-| Filename stem (`my-model.yaml`) | `models:` in matrix YAML; `--variant .../my-model`     |
-| `provider`                      | `openai` (OpenAI-compatible), `anthropic`, or `google` |
-| `model_name`                    | Default model string sent to the API                   |
-| `base_url`                      | Required for `openai`; optional for others             |
-| `api_key_env`                   | Env var from step 1                                    |
-
-
-Optional runtime overrides per preset: `{PREFIX}_MODEL` and `{PREFIX}_BASE_URL`, where `PREFIX` is derived from `api_key_env` by stripping `_API_KEY` (e.g. `MINIMAX_API_KEY` → `MINIMAX_MODEL`).
-
-For `anthropic` or `google` presets, install optional extras: `uv sync --extra anthropic` or `uv sync --extra all-providers`.
-
-### 3. Compose tools
-
-1. Add `experiments/tooling/<family>/<tool>.py` — one tool function per file, delegating to [agent_eval_matrix.tools](src/agent_eval_matrix/tools.py) or your own logic with `FileEditDeps`.
-2. Do **not** put `SYSTEM_PROMPT`, `TOOLS`, or `register(agent)` in tool modules.
-3. Create `experiments/tool_sets/my_set.yaml`:
-
-```yaml
-name: my_set
-system_prompt: |
-  You are an agent working in a sandbox workspace. Use workspace-relative paths only.
-tools:
-  - tooling/reference/read_file.py
-  - tooling/reference/str_replace.py
-```
-
-Paths are relative to `experiments/`.
-
-### 4. Add cases
-
-`experiments/cases/my_case.yaml`:
-
-```yaml
-name: my_case
-instruction: Set the greeting to "Hello, world!" in main.py
-file_name: main.py
-initial_content: |
-  def main():
-      print("Hi")
-expected_output: |
-  def main():
-      print("Hello, world!")
-tags: []
-```
-
-Optional pack: `experiments/case_sets/my_pack.yaml` with `name` and `cases: [my_case]`.
-
-### 5. Define a matrix
-
-Flat YAML under `experiments/matrices/` (no nested `matrix:` block):
-
-`experiments/matrices/my_matrix.yaml`:
-
-```yaml
-tool_sets:
-  - my_set
-models:
-  - my-model
-case_sets:
-  - my_pack
-# or: cases: [my_case]
-```
-
-Default run target when `--matrix` is omitted: [experiments/matrices/demo.yaml](experiments/matrices/demo.yaml) (mocked model, no API key). Use [experiments/matrices/smoke.yaml](experiments/matrices/smoke.yaml) for a quick API smoke (2 cells) and [experiments/matrices/full.yaml](experiments/matrices/full.yaml) for the full benchmark (4 tool sets × 5 cases; CI runs this matrix).
-
-### 6. Run
-
-```bash
-uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/my_matrix.yaml
-uv run python -m agent_eval_matrix.evals run --case my_case --tool-set my_set --model my-model
-```
-
-Optional: `--variant my_set/my-model`, `--trace`.
-
-After `source .venv/bin/activate`, you can omit `uv run`. Entry points: `agent-eval-matrix`, `agent-eval`.
-
-## Examples in this repository
-
-The following are **reference implementations**, not requirements for your fork:
-
-
-| Path                                                                                | Contents                                                                  |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [experiments/models/](experiments/models/)                                        | Sample model presets (`minimax-m2.7.yaml`, …)                             |
-| [experiments/tool_sets/](experiments/tool_sets/)                                  | Sample stacks (reference-style, OpenCrabs-style ports, hypothesis variants) |
-| [experiments/cases/](experiments/cases/) + [experiments/case_sets/](experiments/case_sets/) | Sample workspace tasks (file-outcome scoring)                             |
-| [experiments/matrices/](experiments/matrices/)                                    | Sample matrices (`demo`, `smoke`, `full`, `hashline_hypotheses`, …)         |
-| [docs/README.md](docs/README.md)                                                    | Example study write-up and charts                                         |
-| [reports/](reports/)                                                              | Example matrix JSON from a past run                                       |
-
-
-Example preset in `.env.example`: `minimax-m2.7` / `MINIMAX_API_KEY`.
-
-## Layout
-
-
-| Path                     | Role                                                           |
-| ------------------------ | -------------------------------------------------------------- |
-| `experiments/cases/`     | One YAML per task                                              |
-| `experiments/case_sets/` | Named case lists                                               |
-| `experiments/tool_sets/` | `system_prompt` + `tools:`                                     |
-| `experiments/tooling/`   | Per-tool `.py` modules                                         |
-| `experiments/models/`    | Model preset YAML (`provider`, `model_name`, `api_key_env`, …) |
-| `experiments/matrices/`  | Runnable cross-product specs                                   |
-| `src/agent_eval_matrix/`           | Loader, sandbox, CLI, model factory                            |
-
-
-Operator details (metrics definitions, example matrix commands): [CLAUDE.md](CLAUDE.md).
+See [LICENSE](LICENSE).

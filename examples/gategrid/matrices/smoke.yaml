@@ -1,0 +1,7 @@
+name: smoke
+profiles:
+  - demo
+models:
+  - mock
+case_sets:
+  - demo

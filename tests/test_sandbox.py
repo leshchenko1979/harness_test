@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from agent_eval_matrix.sandbox import (
+from gategrid.contrib.file_edit.sandbox import (
     SandboxError,
     canonical_path,
     relative_workspace_path,

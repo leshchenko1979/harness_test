@@ -11,54 +11,6 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "agent-eval-matrix"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "pydantic" },
-    { name = "pydantic-ai-slim", extra = ["logfire", "openai"] },
-    { name = "pydantic-evals" },
-    { name = "python-dotenv" },
-    { name = "pyyaml" },
-]
-
-[package.optional-dependencies]
-all-providers = [
-    { name = "pydantic-ai-slim", extra = ["anthropic", "google", "logfire", "openai"] },
-]
-anthropic = [
-    { name = "pydantic-ai-slim", extra = ["anthropic"] },
-]
-dev = [
-    { name = "pytest" },
-]
-google = [
-    { name = "pydantic-ai-slim", extra = ["google"] },
-]
-report = [
-    { name = "jupyter" },
-    { name = "matplotlib" },
-    { name = "pandas" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "jupyter", marker = "extra == 'report'", specifier = ">=1.0" },
-    { name = "matplotlib", marker = "extra == 'report'", specifier = ">=3.8" },
-    { name = "pandas", marker = "extra == 'report'", specifier = ">=2.0" },
-    { name = "pydantic", specifier = ">=2.10" },
-    { name = "pydantic-ai-slim", extras = ["anthropic"], marker = "extra == 'anthropic'" },
-    { name = "pydantic-ai-slim", extras = ["google"], marker = "extra == 'google'" },
-    { name = "pydantic-ai-slim", extras = ["openai", "anthropic", "google", "logfire"], marker = "extra == 'all-providers'" },
-    { name = "pydantic-ai-slim", extras = ["openai", "logfire"], specifier = ">=1.0.0" },
-    { name = "pydantic-evals", specifier = ">=1.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0" },
-    { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-]
-provides-extras = ["anthropic", "google", "all-providers", "dev", "report"]
-
-[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -702,6 +654,54 @@ sdist = { url = "https://files.pythonhosted.org/packages/30/3e/a80a8c077fd798951
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cf/58/8acf1b3e91c58313ce5cb67df61001fc9dcd21be4fadb76c1a2d540e09ed/fqdn-1.5.1-py3-none-any.whl", hash = "sha256:3a179af3761e4df6eb2e026ff9e1a3033d3587bf980a0b1b2e1e5d08d7358014", size = 9121, upload-time = "2021-03-11T07:16:28.351Z" },
 ]
+
+[[package]]
+name = "gategrid"
+version = "0.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+all-providers = [
+    { name = "pydantic-ai-slim", extra = ["anthropic", "google", "logfire", "openai"] },
+]
+anthropic = [
+    { name = "pydantic-ai-slim", extra = ["anthropic"] },
+]
+dev = [
+    { name = "pytest" },
+]
+google = [
+    { name = "pydantic-ai-slim", extra = ["google"] },
+]
+pydantic-ai = [
+    { name = "pydantic-ai-slim", extra = ["logfire", "openai"] },
+]
+report = [
+    { name = "jupyter" },
+    { name = "matplotlib" },
+    { name = "pandas" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jupyter", marker = "extra == 'report'", specifier = ">=1.0" },
+    { name = "matplotlib", marker = "extra == 'report'", specifier = ">=3.8" },
+    { name = "pandas", marker = "extra == 'report'", specifier = ">=2.0" },
+    { name = "pydantic", specifier = ">=2.10" },
+    { name = "pydantic-ai-slim", extras = ["anthropic"], marker = "extra == 'anthropic'" },
+    { name = "pydantic-ai-slim", extras = ["google"], marker = "extra == 'google'" },
+    { name = "pydantic-ai-slim", extras = ["openai", "anthropic", "google", "logfire"], marker = "extra == 'all-providers'" },
+    { name = "pydantic-ai-slim", extras = ["openai", "logfire"], marker = "extra == 'pydantic-ai'", specifier = ">=1.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
+provides-extras = ["pydantic-ai", "anthropic", "google", "all-providers", "dev", "report"]
 
 [[package]]
 name = "genai-prices"
@@ -2413,23 +2413,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ac/ad/5565071e937d8e752842ac241463944c9eb14c87e2d269f2658a5bd05e98/pydantic_core-2.46.4-pp311-pypy311_pp73-musllinux_1_1_armv7l.whl", hash = "sha256:d396ec2b979760aaf3218e76c24e65bd0aca24983298653b3a9d7a45f9e47b30", size = 2310000, upload-time = "2026-05-06T13:37:56.694Z" },
     { url = "https://files.pythonhosted.org/packages/4f/c3/66883a5cec183e7fba4d024b4cbbe61851a63750ef606b0afecc46d1f2bf/pydantic_core-2.46.4-pp311-pypy311_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:86e1a4418c6cd97d60c95c71164158eaf7324fae7b0923264016baa993eba6fc", size = 2361286, upload-time = "2026-05-06T13:40:05.667Z" },
     { url = "https://files.pythonhosted.org/packages/4b/2d/69abac8f838090bbecd5df894befb2c2619e7996a98ddb949db9f3b93225/pydantic_core-2.46.4-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:d51026d73fcfd93610abc7b27789c26b313920fcfb20e27462d74a7f8b06e983", size = 2193071, upload-time = "2026-05-06T13:38:08.682Z" },
-]
-
-[[package]]
-name = "pydantic-evals"
-version = "1.102.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "anyio" },
-    { name = "logfire-api" },
-    { name = "pydantic" },
-    { name = "pydantic-ai-slim" },
-    { name = "pyyaml" },
-    { name = "rich" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/2a/2a/2f0a18e170dc1db4b32120bea9e1162ef196c1f453db823878f5eaf7b8bb/pydantic_evals-1.102.0.tar.gz", hash = "sha256:711a6335d24a11c324e5a5c7758b12dfd77209f885ab2501d7eedb9dd5b75b18", size = 78557, upload-time = "2026-05-23T01:14:34.447Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/fd/2281c166b2c5cedab003b12bf8a630656cb5a9bbd552e4981ee190570d15/pydantic_evals-1.102.0-py3-none-any.whl", hash = "sha256:579edd6f7056d0fe52e03c7004377a0b9c42264c60a370258235fb0750fe20a2", size = 93529, upload-time = "2026-05-23T01:14:25.559Z" },
 ]
 
 [[package]]

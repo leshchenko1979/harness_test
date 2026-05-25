@@ -1,9 +1,0 @@
-tool_sets:
-  - baseline
-  - minimal
-  - strict/verbose
-  - opencrabs_original
-models:
-  - minimax-m2.7
-case_sets:
-  - all

@@ -6,7 +6,7 @@ Report for **OpenCrabs** developers (upstream was not consulted before this stud
 | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | [hashline_hypothesis_report.md](hashline_hypothesis_report.md)                                        | Full report — implementers start at §2; metrics §3 |
 | [hashline_hypothesis_report.ipynb](hashline_hypothesis_report.ipynb)                                  | Charts                                           |
-| [../reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json](../reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json) | 50 runs                                          |
+| `.gategrid/reports/*_matrix.json` | Gategrid bench output (see [hashline_hypothesis_report.md](hashline_hypothesis_report.md)) |
 
 **Report sections:** [§2 Quick reference](hashline_hypothesis_report.md#2-quick-reference-for-implementers) · [§3 Executive summary](hashline_hypothesis_report.md#3-executive-summary)
 

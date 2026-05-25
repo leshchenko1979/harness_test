@@ -1,0 +1,7 @@
+name: hashline-smoke
+profiles:
+  - opencrabs_original
+models:
+  - mock
+cases:
+  - indent_collision

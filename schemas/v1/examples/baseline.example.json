@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "profile_id": "telegram-mcp-stdio",
+  "updated_at": "2026-05-24T23:28:45.423431+00:00",
+  "source_report_path": null,
+  "fingerprint": {
+    "matrix_name": "telegram-mcp-gate",
+    "profile_ids": [
+      "telegram-mcp-stdio"
+    ],
+    "case_ids": [
+      "read_saved",
+      "search_alice"
+    ]
+  },
+  "overall": {
+    "pass_rate": 1.0,
+    "duration_ms_mean": 1050.0,
+    "cell_count": 2,
+    "metrics": {
+      "tokens_spent": 600.0,
+      "turns": 1.5
+    }
+  },
+  "cells": {
+    "search_alice\u0000telegram-mcp-stdio\u0000gpt-4o-mini": {
+      "key": {
+        "case_id": "search_alice",
+        "profile_id": "telegram-mcp-stdio",
+        "model_id": "gpt-4o-mini"
+      },
+      "passed": true,
+      "duration_ms": 1200.0,
+      "metrics": {
+        "expected_tool": "search_contacts",
+        "turns": 2,
+        "tokens_spent": 800
+      }
+    },
+    "read_saved\u0000telegram-mcp-stdio\u0000gpt-4o-mini": {
+      "key": {
+        "case_id": "read_saved",
+        "profile_id": "telegram-mcp-stdio",
+        "model_id": "gpt-4o-mini"
+      },
+      "passed": true,
+      "duration_ms": 900.0,
+      "metrics": {
+        "turns": 1,
+        "tokens_spent": 400
+      }
+    }
+  }
+}

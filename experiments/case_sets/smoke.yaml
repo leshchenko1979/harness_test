@@ -1,4 +1,0 @@
-name: smoke
-cases:
-  - add_docstring
-  - whitespace_trap
