@@ -1,0 +1,7 @@
+name: mcp-gate
+profiles:
+  - mcp-candidate
+models:
+  - openai-mini
+case_sets:
+  - mcp-smoke

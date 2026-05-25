@@ -61,25 +61,35 @@ Durable **implementation guardrails** for agents and humans. Not the product spe
 - **Adapters return `RunArtifact` only** — no pass/fail in adapters. [ADR 0003](docs/adr/0003-gategrid-phase2-executor.md).
 - **`profile.runtime_adapter` required** for `run` — no silent default.
 - **`RunArtifact.error` set** → attempt fails (adapter need not raise); artifact still stored. [ADR 0004](docs/adr/0004-gategrid-phase3-evaluators-contrib.md).
-- **Pass/fail:** all discovered **`gate`** evaluators must pass on the attempt; if none registered, adapter success (no error) passes.
-- **Global gate registry** — every `gate` evaluator runs on **every** cell; contrib gates must **no-op** when prerequisites are absent (e.g. missing `expected_output`).
-- **`metric` evaluators** never flip `CellResult.passed`; dict keys merge as `{evaluator_id}.{key}` unless tagged **`metric_canonical`** (unprefixed into `cell.metrics`).
-- **Builtin `pydantic_run_usage`:** registered on `import gategrid.integrations.pydantic_ai`; reads `ctx.scratchpad["usage_metrics"]` (plain ints from `run_agent`); adapters must import integration even on mock paths.
+- **Pass/fail:** all evaluators with `role="gate"` must return `EvaluatorOutcome(pass_=True)`; if none registered, adapter success (no error) passes.
+- **Global gate registry** — every `role="gate"` evaluator runs on **every** cell; contrib gates must **no-op** when prerequisites are absent (e.g. missing `file_edit` tag).
+- **`role="metric"` evaluators** never flip `CellResult.passed`; merge via `EvaluatorOutcome.metrics` — prefixed `{evaluator_id}.{key}` unless `@evaluator(canonical=True)` (unprefixed into `cell.metrics`).
+- **Pydantic observability (Option A):** not a core evaluator — adapters call `run_agent` + `enrich_artifact_from_run` in `gategrid.integrations.pydantic_ai`; mock via `mock_run_result()`. Core never imports pydantic for evaluator registration. Slim transcript merges each tool-call with its tool-return (one `role: tool` row); `tools_called` is `dict[str, int]` name → invocation count; no `tool_call_count` in `metrics`.
 - **`RunArtifact` shape:** `messages`, `metrics`, `evaluators`, `error` only — no `files` / `final_text` / `tool_calls` in matrix JSON ([ADR 0004](docs/adr/0004-gategrid-phase3-evaluators-contrib.md)).
-- **Three metric layers** (do not mix):
+- **Artifact layers:**
 
   | Layer | Contents |
   | ----- | -------- |
-  | `artifact.metrics` | Adapter-only scalars from `RunArtifact` / session mapping (no evaluator merge) |
-  | `artifact.evaluators` | **Gates only** — `true` on pass, or `dict` with `pass: false` plus `message` / `detail` on fail; metric evaluator outcomes are **not** stored here |
-  | `cell.metrics` | All merged metrics: canonical keys (`turns`, `tokens_spent`, …) and prefixed `{evaluator_id}.{key}` from metric / `metric_canonical` evaluators |
-- **Scratchpad:** `RunContext.scratchpad` is per-attempt, not serialized; file-edit sets `actual_content`; pydantic path sets `usage_metrics`.
+  | `artifact.metrics` | From adapter / pydantic **enrich** + optional evaluator patches (deep-merge; duplicate keys → `ArtifactMergeError`) |
+  | `artifact.tools_called` | Pydantic enrich only — per-tool invocation counts; evaluators must not patch |
+  | `artifact.evaluators` | **Gates only** — executor writes from `EvaluatorOutcome.pass_` / `message` / `detail`; metrics never stored here |
+  | `cell.metrics` | `artifact.metrics` numerics + merged metric-evaluator keys (for aggregates / gate YAML) |
+- **Scratchpad:** per-attempt, not serialized; file-edit sets `actual_content` for `file_content_match` only — not usage.
+- **Evaluator patches:** must not set `messages` or `evaluators` on `artifact`; gates → metrics run order in `run_evaluators_on_artifact`.
 - **Gate failures:** `CellResult.error` = failing gate id; CLI reads `artifact.evaluators[id].message` / `.detail` ([`cli_output.py`](src/gategrid/cli_output.py)).
 - **Aggregates / gate:** `compute_overall(cells, mean_keys)` and gate checks use keys from matrix YAML only — core never hardcodes `turns` ([ADR 0001](docs/adr/0001-gategrid-phase0-schemas-cli-gate.md)).
 - **Builtin gates:** `import gategrid.contrib.file_edit` registers `file_content_match`; user `evaluators/` must not re-register the same id.
 
+## MCP (Phase 4)
+
+- **Config under `profile.data` only** — `data.mcp` (`transport`, `command`/`args` or `url`); `data.env_pass_through` lists env **names**; values resolved in the adapter, not in core `validate`. [ADR 0006](docs/adr/0006-gategrid-phase4-mcp-path.md).
+- **`contrib/mcp`** — `mcp_from_profile`, `resolve_env_pass_through`; integration-agnostic (no `mcp` / pydantic-ai import at contrib load).
+- **Pydantic-ai MCP** — `mcp_toolset_from_data` in `integrations/pydantic_ai/mcp_servers`; requires `gategrid[pydantic-ai,mcp]`. Stdio spawn uses `cwd=eval_root`.
+- **Shared eval roots:** MCP gates no-op without `mcp` case tag; non-MCP gates (e.g. echo) no-op outside their profile/case — global registry runs all gates on every cell.
+- **CI:** `examples/gategrid/matrices/mcp-gate-mock.yaml` for pytest; live `mcp-gate.yaml` is manual README exit.
+
 ## Tests
 
 - **Import-guard tests** assert the **installed core** (optional deps not importable), not monorepo `PYTHONPATH` side effects.
-- **Phase exit:** `pytest tests/test_gategrid_phase*.py` + `test_gategrid_cli_output.py` + `test_gategrid_spike_c.py`.
+- **Phase exit:** `pytest tests/test_gategrid_phase*.py` (through phase 4) + `test_gategrid_cli_output.py` + `test_gategrid_spike_c.py`.
 - **CLI smoke in a subprocess** when in-process imports can mask evaluator registration bugs (e.g. duplicate `@evaluator` on contrib + example shim).

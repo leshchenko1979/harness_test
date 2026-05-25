@@ -45,10 +45,15 @@ def test_run_artifact_evaluators_round_trip() -> None:
 
     art_pass = mcp_shaped_artifact()
     art_pass.evaluators["file_content_match"] = True
-    restored_pass = RunArtifact.model_validate(
-        json.loads(art_pass.model_dump_json())
-    )
+    restored_pass = RunArtifact.model_validate(json.loads(art_pass.model_dump_json()))
     assert restored_pass.evaluators["file_content_match"] is True
+
+
+def test_run_artifact_tools_called_round_trip() -> None:
+    art = mcp_shaped_artifact()
+    raw = json.loads(art.model_dump_json())
+    restored = RunArtifact.model_validate(raw)
+    assert restored.tools_called == {"search_contacts": 1}
 
 
 def test_report_baseline_gate_round_trip(tmp_path: Path) -> None:

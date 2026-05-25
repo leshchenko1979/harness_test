@@ -12,6 +12,8 @@ from pydantic_ai.usage import RunUsage
 class RunResult:
     usage_metrics: dict[str, int]
     final_text: str | None = None
+    run_messages: list[Any] | None = None
+    user_prompt: str | None = None
 
 
 def usage_to_metric_dict(usage: RunUsage) -> dict[str, int]:
@@ -39,20 +41,26 @@ async def run_agent(
     model: object,
     *,
     system_prompt: str,
-    tools: tuple[Any, ...],
-    deps: object,
+    tools: tuple[Any, ...] = (),
+    toolsets: tuple[Any, ...] = (),
+    deps: object | None = None,
     user_prompt: str,
 ) -> RunResult:
     from pydantic_ai import Agent
 
-    deps_type = type(deps)
-    agent = Agent(
-        model,
-        system_prompt=system_prompt,
-        deps_type=deps_type,
-        tools=list(tools),
-    )
-    result = await agent.run(user_prompt, deps=deps)
+    agent_kwargs: dict[str, Any] = {
+        "model": model,
+        "system_prompt": system_prompt,
+    }
+    if tools:
+        agent_kwargs["tools"] = list(tools)
+    if toolsets:
+        agent_kwargs["toolsets"] = list(toolsets)
+    if deps is not None:
+        agent_kwargs["deps_type"] = type(deps)
+        result = await Agent(**agent_kwargs).run(user_prompt, deps=deps)
+    else:
+        result = await Agent(**agent_kwargs).run(user_prompt)
     output = result.output
     final_text = (
         output
@@ -64,4 +72,6 @@ async def run_agent(
     return RunResult(
         usage_metrics=usage_to_metric_dict(result.usage),
         final_text=final_text,
+        run_messages=list(result.all_messages()),
+        user_prompt=user_prompt,
     )

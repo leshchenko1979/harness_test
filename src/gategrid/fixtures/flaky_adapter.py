@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import gategrid.integrations.pydantic_ai  # noqa: F401
-
 from gategrid.models.artifact import Message, RunArtifact
 from gategrid.runtime import RunContext
 
@@ -16,7 +14,7 @@ class FlakyAdapter:
         self.calls += 1
         if self.calls < 2:
             raise RuntimeError("transient")
-        ctx.scratchpad["usage_metrics"] = {"turns": 1, "tokens_spent": 1}
         return RunArtifact(
             messages=[Message(role="assistant", content="ok")],
+            metrics={"turns": 1, "tokens_spent": 1},
         )

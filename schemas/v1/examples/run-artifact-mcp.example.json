@@ -7,6 +7,12 @@
       "tool_call_id": null
     },
     {
+      "role": "tool",
+      "content": "1 contact",
+      "name": "search_contacts",
+      "tool_call_id": null
+    },
+    {
       "role": "assistant",
       "content": "Found 1 contact matching Alice.",
       "name": null,
@@ -14,8 +20,10 @@
     }
   ],
   "metrics": {
-    "mcp_errors": 0,
-    "tool_call_count": 1
+    "mcp_errors": 0
+  },
+  "tools_called": {
+    "search_contacts": 1
   },
   "evaluators": {},
   "error": null

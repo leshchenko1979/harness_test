@@ -10,13 +10,13 @@ Phase 2 used interim `gate_check` on `@case`. Phase 3 introduces user-owned `@ev
 
 | Topic | Decision |
 | ----- | -------- |
-| Evaluators | `@evaluator(tags=[...])` with required `gate` and/or `metric`; discovery under `eval_root/evaluators/` (mirror `cases/`) |
+| Evaluators | `@evaluator(role="gate"\|"metric", canonical=…)`; return `EvaluatorOutcome`; discovery under `eval_root/evaluators/` (mirror `cases/`) |
 | Evaluator ids | Optional `id`; default function name; `GATEGRID_EVALUATOR_ID_QUALIFY=name\|module`; fail on collisions |
 | Pass rule | Attempt passes iff adapter returns without exception, `RunArtifact.error` is unset, and **all** `gate` evaluators pass |
 | `RunArtifact.error` | Non-null → attempt fails; artifact still stored for debugging |
 | `gate_check` | **Removed** from `@case` — no legacy support |
 | No gate evaluators | Adapter success alone passes (migration); smoke example ships `echo_contains_case` |
-| Metric evaluators | Never flip `CellResult.passed`; dict results merged with `{evaluator_id}.` key prefix |
+| Metric evaluators | `role="metric"`; never flip `CellResult.passed`; `EvaluatorOutcome.metrics` merged with optional `{evaluator_id}.` prefix |
 | Global registry | All discovered `gate` evaluators run on every cell; contrib gates no-op when prerequisites missing |
 | Reports | `AttemptRecord.evaluator_results`; JSON schemas updated with `error` + `evaluator_results` |
 | `gategrid.contrib` | Optional reference package in install; `file_edit` (sandbox + `file_content_match_impl`); `llm_judge` ABC stub |
@@ -47,8 +47,9 @@ Phase 2 used interim `gate_check` on `@case`. Phase 3 introduces user-owned `@ev
 | Gate `dict` return | `pass` (required for dict), optional `artifact` (substitutes whole `RunArtifact`), `message`, `detail` — pass-only → bool `true` on `artifact.evaluators[id]`; failures stay as dict |
 | Metric evaluators | Outcomes merge into `cell.metrics` only (via `_merge_metric_outcome`); never written to `artifact.evaluators` |
 | Reports | Drop `AttemptRecord.evaluator_results`; gate outcomes on `artifact.evaluators` only |
-| Canonical metrics | Builtin `pydantic_run_usage` (`metric` + `metric_canonical`) merges `turns` / `tokens_spent` unprefixed into `cell.metrics` from `scratchpad["usage_metrics"]` |
-| Adapter metrics | `artifact.metrics` is adapter/session only — no `primary_file` or evaluator keys |
+| Pydantic enrich (Option A) | `enrich_artifact_from_run` in `integrations.pydantic_ai` — **not** a core evaluator; adapters populate `artifact.messages` (merged tool call+return), `artifact.metrics`, and `artifact.tools_called` (name → count) before gates run |
+| Adapter metrics | `artifact.metrics` from enrich and/or evaluator patches; no `primary_file` |
+| Evaluator patches | Deep-merge into artifact; duplicate metric keys or second `messages` writer → `ArtifactMergeError` |
 
 ## See also
 

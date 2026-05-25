@@ -12,6 +12,8 @@ def _last_assistant_text(artifact: RunArtifact) -> str:
     return ""
 
 
-@evaluator(tags=["gate"])
+@evaluator(role="gate")
 def echo_contains_case(ctx: RunContext, artifact: RunArtifact) -> bool:
+    if ctx.profile_id != "demo":
+        return True
     return ctx.case_id in _last_assistant_text(artifact)

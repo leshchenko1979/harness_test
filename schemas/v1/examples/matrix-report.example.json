@@ -57,8 +57,10 @@
               }
             ],
             "metrics": {
-              "mcp_errors": 0,
-              "tool_call_count": 1
+              "mcp_errors": 0
+            },
+            "tools_called": {
+              "search_contacts": 1
             },
             "evaluators": {},
             "error": null
@@ -100,8 +102,10 @@
               }
             ],
             "metrics": {
-              "mcp_errors": 0,
-              "tool_call_count": 1
+              "mcp_errors": 0
+            },
+            "tools_called": {
+              "read_saved": 1
             },
             "evaluators": {},
             "error": null

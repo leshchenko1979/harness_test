@@ -10,6 +10,7 @@ from gategrid.contrib.file_edit.evaluators import (
     file_content_match_impl as file_content_match,
 )
 from gategrid.evaluators import discover_evaluators, run_evaluators_on_artifact
+from gategrid.models.evaluator_outcome import EvaluatorOutcome
 from gategrid.executor import run_matrix_sync
 from gategrid.models.artifact import RunArtifact
 from gategrid.runtime import RunContext
@@ -66,7 +67,7 @@ def test_metric_evaluator_does_not_fail_cell(
         "from gategrid import evaluator\n"
         "from gategrid.models.artifact import RunArtifact\n"
         "from gategrid.runtime import RunContext\n\n"
-        "@evaluator(tags=['metric'])\n"
+        "@evaluator(role='metric')\n"
         "def noisy(ctx: RunContext, artifact: RunArtifact) -> dict:\n"
         "    return {'x': 1}\n",
         encoding="utf-8",
@@ -102,7 +103,7 @@ def test_file_content_match_skip_and_match() -> None:
         case=CaseRecord(case_id="c"),
     )
     art = RunArtifact()
-    assert file_content_match(ctx, art) is True
+    assert file_content_match(ctx, art).pass_ is True
 
     ctx_tag = RunContext(
         case_id="c",
@@ -124,14 +125,12 @@ def test_file_content_match_skip_and_match() -> None:
     )
     ctx_tag.scratchpad["actual_content"] = "wrong"
     result = file_content_match(ctx_tag, art)
-    assert isinstance(result, dict)
-    assert result["pass"] is False
-    assert "detail" in result
+    assert result.pass_ is False
+    assert result.detail
 
     ctx_tag.scratchpad["actual_content"] = "hello"
     result_ok = file_content_match(ctx_tag, art)
-    assert isinstance(result_ok, dict)
-    assert result_ok["pass"] is True
+    assert result_ok.pass_ is True
 
     gates = [discover_evaluators(Path("."))["file_content_match"]]
     _, art_out, _ = run_evaluators_on_artifact(
@@ -165,8 +164,8 @@ def test_smoke_with_evaluators(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     assert cell.metrics.get("turns") == 1
     art = cell.attempts[0].artifact
     assert art is not None
-    assert "pydantic_run_usage" not in art.evaluators
-    assert "turns" not in art.evaluators
+    assert art.metrics.get("turns") == 1
+    assert cell.metrics.get("turns") == 1
     assert art.evaluators.get("echo_contains_case") is True
 
 

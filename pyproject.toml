@@ -29,6 +29,7 @@ pydantic-ai = ["pydantic-ai-slim[openai,logfire]>=1.0.0"]
 anthropic = ["pydantic-ai-slim[anthropic]"]
 google = ["pydantic-ai-slim[google]"]
 all-providers = ["pydantic-ai-slim[openai,anthropic,google,logfire]"]
+mcp = ["mcp>=1.12.4"]
 dev = ["pytest>=9.0"]
 report = ["pandas>=2.0", "matplotlib>=3.8", "jupyter>=1.0"]
 

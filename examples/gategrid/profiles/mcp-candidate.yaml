@@ -1,0 +1,11 @@
+name: mcp-candidate
+runtime_adapter: adapters.mcp_agent:PydanticAiMcpAdapter
+data:
+  system_prompt: >-
+    You have an MCP add tool. Use it when the user asks for arithmetic.
+    Reply with only the final number when asked for a numeric result.
+  mcp:
+    transport: stdio
+    command: python
+    args: ["server/calc_server.py"]
+  env_pass_through: []

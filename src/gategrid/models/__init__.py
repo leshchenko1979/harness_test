@@ -1,4 +1,5 @@
 from gategrid.models.artifact import Message, RunArtifact
+from gategrid.models.evaluator_outcome import ArtifactMergeError, EvaluatorOutcome
 from gategrid.models.baseline import Baseline, BaselineCellSnapshot, BaselineOverall
 from gategrid.models.cell import AttemptRecord, CellKey, CellResult
 from gategrid.models.gate_config import (
@@ -20,6 +21,7 @@ from gategrid.models.report import (
 )
 
 __all__ = [
+    "ArtifactMergeError",
     "AttemptRecord",
     "Baseline",
     "BaselineCellSnapshot",
@@ -27,6 +29,7 @@ __all__ = [
     "CaseSetConfig",
     "CellKey",
     "CellResult",
+    "EvaluatorOutcome",
     "GateConfig",
     "GateLimits",
     "GateRegression",

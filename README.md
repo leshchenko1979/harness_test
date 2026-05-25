@@ -89,7 +89,7 @@ flowchart LR
 - **CI that means something** — PR: `run` → `gate` (never `baseline update` on PR). `main`: `run` → `gate` → `baseline update`.
 - **Three layers of pass** — cell (`gate` evaluators), regression (vs baseline), optional hard limits on this run.
 - **Cost control** — optional PR sampling shrinks how many cases run without changing the gated profile.
-- **Bring your stack** — `RuntimeAdapter`, optional `gategrid[pydantic-ai]`, optional [contrib](src/gategrid/contrib/README.md) helpers (file-edit sandbox, LLM-judge base class).
+- **Bring your stack** — `RuntimeAdapter`, optional `gategrid[pydantic-ai]`, optional `gategrid[mcp]`, optional [contrib](src/gategrid/contrib/README.md) helpers (file-edit sandbox, MCP profile config, LLM-judge base class).
 
 ---
 
@@ -107,28 +107,53 @@ Artifacts land under `.gategrid/reports/` and `.gategrid/baselines/` (override w
 
 ---
 
+## MCP evaluations
+
+LLM-mediated E2E over **your** MCP server (stdio subprocess or remote HTTP). Gategrid does not run docker, databases, or product side effects — you start the MCP process and own secrets.
+
+| Install | Use when |
+| ------- | -------- |
+| `pip install "gategrid[pydantic-ai,mcp]"` | Path A: pydantic-ai agent + MCP toolsets (example adapter) |
+| `pip install "gategrid[mcp]"` | Path B: your adapter + official MCP SDK (or another client) |
+
+MCP connection settings live in **`profile.data.mcp`** (not a core profile field). Helpers: `gategrid.contrib.mcp.mcp_from_profile`, `resolve_env_pass_through` for `data.env_pass_through` **names** only.
+
+```python
+from gategrid import case, evaluator
+from gategrid.contrib.mcp import mcp_from_profile
+
+# In your RuntimeAdapter.execute:
+# mcp_cfg = mcp_from_profile(ctx.profile)
+# Path A: mcp_toolset_from_data(...) + run_agent(toolsets=[...])
+# Path B: your MCP client + agent loop → RunArtifact
+```
+
+```bash
+uv sync --extra dev --extra pydantic-ai --extra mcp
+export OPENAI_API_KEY=...
+gategrid run --matrix examples/gategrid/matrices/mcp-gate.yaml --root examples/gategrid
+```
+
+Offline / CI: `matrices/mcp-gate-mock.yaml` with `provider: mock`. See [examples/gategrid/README.md](examples/gategrid/README.md).
+
+---
+
 ## Example (Python-first)
 
 ```python
 from gategrid import case, evaluator
 
-@case(tags=["smoke"])
-async def create_event(profile, ctx):
-    return await run_my_agent(
-        mcp=profile.mcp,
-        user_turns=["Create a standup tomorrow 9am"],
-        model=profile.model,
-    )
+@case(tags=["smoke"], data={"user_prompt": "Create a standup tomorrow 9am"})
+def create_event() -> None:
+    pass  # prompt in case data; adapter runs the agent loop
 
-@evaluator(tags=["gate"])
-def event_created(artifact, ctx):
-    assert artifact.metrics.get("calendar_write_ok")
+@evaluator(role="gate")
+def event_created(ctx, artifact):
+    return artifact.metrics.get("calendar_write_ok")
 ```
 
 ```bash
-export OPENAI_API_KEY=...
-gategrid run --matrix matrices/mcp-gate.yaml
-gategrid gate
+gategrid run --matrix examples/gategrid/matrices/smoke.yaml
 ```
 
 ---
@@ -174,7 +199,9 @@ Detail: [docs/roadmap/battlecard.md](docs/roadmap/battlecard.md) · [docs/roadma
 
 ```bash
 pip install gategrid
-pip install "gategrid[pydantic-ai]"   # optional LLM runtime
+pip install "gategrid[pydantic-ai]"        # optional LLM runtime
+pip install "gategrid[pydantic-ai,mcp]"   # optional MCP toolsets (pydantic-ai path)
+pip install "gategrid[mcp]"               # optional MCP SDK only (bring-your-own adapter)
 ```
 
 Python ≥3.11. Secrets via environment only.
@@ -188,7 +215,8 @@ Monorepo: [src/gategrid/](src/gategrid/) (framework), [examples/gategrid/](examp
 ```bash
 uv sync --extra dev
 pytest tests/test_gategrid_phase0.py tests/test_gategrid_phase1.py \
-  tests/test_gategrid_phase2.py tests/test_gategrid_phase3.py
+  tests/test_gategrid_phase2.py tests/test_gategrid_phase3.py \
+  tests/test_gategrid_phase4.py
 ```
 
 ---

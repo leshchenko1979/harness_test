@@ -1,0 +1,7 @@
+name: mcp-gate-mock
+profiles:
+  - mcp-candidate
+models:
+  - mock
+case_sets:
+  - mcp-smoke

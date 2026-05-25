@@ -12,7 +12,8 @@ gategrid --version
 gategrid validate --matrix examples/gategrid/matrices/smoke.yaml
 gategrid run --matrix examples/gategrid/matrices/smoke.yaml
 pytest tests/test_gategrid_phase0.py tests/test_gategrid_phase1.py \
-  tests/test_gategrid_phase2.py tests/test_gategrid_phase3.py
+ tests/test_gategrid_phase2.py tests/test_gategrid_phase3.py \
+ tests/test_gategrid_phase4.py
 ```
 
 For hashline / LLM dogfood: `uv sync --extra dev --extra pydantic-ai`.
@@ -44,7 +45,7 @@ pytest tests/test_gategrid_spike_c.py tests/test_gategrid_file_edit_batteries.py
 
 | Path | Role |
 | ---- | ---- |
-| `examples/gategrid/` | Minimal Gategrid smoke (mock) |
+| `examples/gategrid/` | Minimal Gategrid smoke (mock) + MCP gate example (`mcp-gate`, `mcp-gate-mock`) |
 | `examples/file_edit/` | File-edit contrib sample |
 
 ## Hashline hypothesis matrix

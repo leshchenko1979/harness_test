@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import gategrid.integrations.pydantic_ai  # noqa: F401 — registers pydantic_run_usage
-
 from gategrid.contrib.file_edit.cases import FileEditCase
 from gategrid.contrib.file_edit.profile import (
     system_prompt_from_profile,
     tools_from_profile,
     validate_file_edit_profile,
 )
-from gategrid.contrib.file_edit.session import AgentRunOutcome, FileEditSession
+from gategrid.contrib.file_edit.session import FileEditSession
 from gategrid.contrib.file_edit.tools import load_file_edit_tools
 from gategrid.models.artifact import RunArtifact
 from gategrid.runtime import RunContext
@@ -19,14 +17,22 @@ from gategrid.runtime import RunContext
 class PydanticAiFileEditAdapter:
     async def execute(self, ctx: RunContext) -> RunArtifact:
         fe = FileEditCase.from_record(ctx.case)
+        from gategrid.integrations.pydantic_ai import (
+            enrich_artifact_from_run,
+            mock_run_result,
+            model_from_config,
+            run_agent,
+        )
+
         if ctx.model.provider == "mock":
-            ctx.scratchpad["usage_metrics"] = {"turns": 0, "tokens_spent": 0}
+            result = mock_run_result(
+                user_prompt=fe.instruction,
+                final_text="mock",
+            )
             ctx.scratchpad["actual_content"] = fe.expected_output
-            return FileEditSession.mock_artifact(fe)
+            return enrich_artifact_from_run(result, user_prompt=fe.instruction)
 
         validate_file_edit_profile(ctx.profile)
-
-        from gategrid.integrations.pydantic_ai import model_from_config, run_agent
 
         with FileEditSession(fe) as session:
             assert session.deps is not None
@@ -41,8 +47,5 @@ class PydanticAiFileEditAdapter:
                 user_prompt=fe.instruction,
             )
             file_path = session.workspace / fe.file_name
-            ctx.scratchpad["usage_metrics"] = result.usage_metrics
             ctx.scratchpad["actual_content"] = file_path.read_text(encoding="utf-8")
-            return session.to_artifact(
-                AgentRunOutcome(assistant_message=result.final_text)
-            )
+            return enrich_artifact_from_run(result, user_prompt=fe.instruction)

@@ -39,6 +39,16 @@ User eval trees without `cases/` can run matrices that reference builtin ids or 
 | ------ | ------- |
 | `file_edit` | Sandbox, session, `file_edit_case()`, `register_case_from_yaml()` (eval-root only), `register_builtin_case_from_yaml()` (bundled); `load_file_edit_tools()`; profile helpers; **on import** registers builtin gate `file_content_match` + batteries |
 | `llm_judge` | Base class for user-defined LLM judges (no provider calls in core) |
+| `mcp` | `McpProfileConfig`, `mcp_from_profile`, `resolve_env_pass_through` — config + env only |
+
+### Using with other agent integrations
+
+| Path | Extras | Wiring |
+| ---- | ------ | ------ |
+| **A** (pydantic-ai) | `gategrid[pydantic-ai,mcp]` | `mcp_from_profile` → `integrations.pydantic_ai.mcp_toolset_from_data` → `run_agent(toolsets=…)` — see [examples/gategrid](../../examples/gategrid/) |
+| **B** (bring your own) | `gategrid[mcp]` optional | Same `data.mcp` YAML; your adapter connects MCP + LLM and returns `RunArtifact` |
+
+`contrib/mcp` does not register evaluators or import pydantic-ai. Env **values** are never read from YAML — only names in `data.env_pass_through`.
 
 ## Not in contrib
 
@@ -48,6 +58,7 @@ User eval trees without `cases/` can run matrices that reference builtin ids or 
 | `ProfileConfig` core fields | `name`, `runtime_adapter`, `data` only |
 | Env overrides (`{PREFIX}_MODEL`, `_BASE_URL`), API key checks | `gategrid.models.env` (core) |
 | pydantic-ai `Model` + `run_agent` | `gategrid.integrations.pydantic_ai` — `pip install gategrid[pydantic-ai]` |
+| MCP pydantic-ai toolsets | `gategrid.integrations.pydantic_ai.mcp_servers` — `pip install gategrid[pydantic-ai,mcp]` |
 | `load_tool_functions` (eval-root `.py` only) | `gategrid.integrations.pydantic_ai.tools` |
 | `RuntimeAdapter` wiring | User `evals/adapters/` or `examples/file_edit/adapters/` |
 | Product agent tools (OpenCrabs hashline) | User `evals/tooling/opencrabs/` |

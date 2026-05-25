@@ -16,7 +16,8 @@ def _register_builtin_gates() -> None:
     register_builtin_evaluator(
         EvaluatorRecord(
             evaluator_id="file_content_match",
-            tags=["gate"],
+            role="gate",
+            tags=[],
             fn=file_content_match,
             definition="gategrid.contrib.file_edit:file_content_match",
         )

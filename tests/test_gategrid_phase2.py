@@ -135,7 +135,7 @@ def test_retries_flaky_suspect(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
         "from gategrid import evaluator\n"
         "from gategrid.models.artifact import RunArtifact\n"
         "from gategrid.runtime import RunContext\n\n"
-        "@evaluator(tags=['gate'])\n"
+        "@evaluator(role='gate')\n"
         "def wants_ok(ctx: RunContext, artifact: RunArtifact) -> bool:\n"
         "    return any(m.role == 'assistant' and m.content == 'ok' for m in artifact.messages)\n",
         encoding="utf-8",
@@ -173,7 +173,7 @@ def test_gate_evaluator_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
         "from gategrid import evaluator\n"
         "from gategrid.models.artifact import RunArtifact\n"
         "from gategrid.runtime import RunContext\n\n"
-        "@evaluator(tags=['gate'])\n"
+        "@evaluator(role='gate')\n"
         "def always_fail(ctx: RunContext, artifact: RunArtifact) -> bool:\n"
         "    return False\n",
         encoding="utf-8",

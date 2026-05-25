@@ -19,5 +19,6 @@ class RunArtifact(BaseModel):
 
     messages: list[Message] = Field(default_factory=list)
     metrics: dict[str, float | int | str | bool] = Field(default_factory=dict)
+    tools_called: dict[str, int] = Field(default_factory=dict)
     evaluators: dict[str, bool | dict[str, Any]] = Field(default_factory=dict)
     error: str | None = None

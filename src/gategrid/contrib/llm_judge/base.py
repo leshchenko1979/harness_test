@@ -7,7 +7,7 @@ from gategrid.runtime import RunContext
 
 
 class LlmJudgeBase(ABC):
-    """Subclass and implement ``evaluate``; wire with ``@evaluator(tags=['gate'])``."""
+    """Subclass and implement ``evaluate``; wire with ``@evaluator(role='gate')``."""
 
     rubric: str = ""
 

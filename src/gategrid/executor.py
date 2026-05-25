@@ -344,6 +344,14 @@ async def _run_cell(
         elif last_attempt.artifact is not None:
             last_error = _failing_gate_id(last_attempt.artifact)
 
+    fail_metrics = dict(cell_metrics)
+    if attempts:
+        last_attempt = attempts[-1]
+        if last_attempt.artifact is not None:
+            for k, v in last_attempt.artifact.metrics.items():
+                if isinstance(v, (int, float, str, bool)):
+                    fail_metrics.setdefault(str(k), v)
+
     return CellResult(
         key=key,
         passed=False,
@@ -352,5 +360,5 @@ async def _run_cell(
         flaky_suspect=flaky,
         duration_ms=sum(a.duration_ms for a in attempts),
         error=last_error or "cell failed",
-        metrics=cell_metrics,
+        metrics=fail_metrics,
     )

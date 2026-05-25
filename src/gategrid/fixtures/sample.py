@@ -15,7 +15,8 @@ def mcp_shaped_artifact() -> RunArtifact:
             Message(role="user", content="Search my contacts for Alice"),
             Message(role="assistant", content="Found 1 contact matching Alice."),
         ],
-        metrics={"mcp_errors": 0, "tool_call_count": 1},
+        metrics={"mcp_errors": 0},
+        tools_called={"search_contacts": 1},
     )
 
 
@@ -58,7 +59,8 @@ def sample_report(*, pass_second: bool = True) -> MatrixReport:
                     passed=pass_second,
                     artifact=RunArtifact(
                         messages=[Message(role="user", content="Read saved messages")],
-                        metrics={"mcp_errors": 0, "tool_call_count": 1},
+                        metrics={"mcp_errors": 0},
+                        tools_called={"read_saved": 1},
                     ),
                     duration_ms=900.0,
                 )

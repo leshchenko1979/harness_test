@@ -1,0 +1,3 @@
+name: mcp-smoke
+cases:
+  - mcp_add

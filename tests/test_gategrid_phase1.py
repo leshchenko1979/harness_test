@@ -74,7 +74,7 @@ def test_core_install_import_guard(tmp_path: Path) -> None:
 import importlib
 import gategrid  # noqa: F401
 
-for name in ("pydantic_evals", "pydantic_ai"):
+for name in ("pydantic_evals", "pydantic_ai", "mcp"):
     importlib.import_module(name)
 """
     env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}

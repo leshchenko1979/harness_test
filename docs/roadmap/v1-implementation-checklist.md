@@ -160,22 +160,33 @@ Pass/fail driven by `@evaluator(tags=["gate"])`; at least one contrib module exe
 
 ---
 
-## Phase 4 — MCP path
+## Phase 4 — MCP path ✓
 
 **Goal:** Credible LLM-mediated MCP eval story (`[mcp]` extra).
+
+**ADR:** [0006-gategrid-phase4-mcp-path.md](../adr/0006-gategrid-phase4-mcp-path.md)
 
 
 | #   | Item                                                        |                |
 | --- | ----------------------------------------------------------- | -------------- |
-| W   | [ ] Phase workflow                                          |                |
-| 4.1 | [ ] `[mcp]` extra: stdio + remote helpers                   |                |
-| 4.2 | [ ] Example profile: server command + env name pass-through | secrets policy |
-| 4.3 | [ ] Example `matrices/mcp-gate.yaml` (one profile)          | battlecard     |
-| 4.4 | [ ] Document user-owned side effects / env                  |                |
-| 4.5 | [ ] No direct MCP invoke tests in core                      | non-goal       |
+| W   | [x] Phase workflow                                          |                |
+| 4.1 | [x] `[mcp]` extra: stdio + remote helpers                   |                |
+| 4.2 | [x] Example profile: server command + env name pass-through | secrets policy |
+| 4.3 | [x] Example `matrices/mcp-gate.yaml` (one profile)          | battlecard     |
+| 4.4 | [x] Document user-owned side effects / env                  |                |
+| 4.5 | [x] No direct MCP invoke tests in core                      | non-goal       |
 
 
-**Exit:** README MCP section runnable with API key + local server.
+**Phase 4 exit:**
+
+```bash
+uv sync --extra dev --extra pydantic-ai --extra mcp
+pytest tests/test_gategrid_phase0.py tests/test_gategrid_phase1.py \
+  tests/test_gategrid_phase2.py tests/test_gategrid_phase3.py \
+  tests/test_gategrid_phase4.py tests/test_gategrid_cli_output.py
+gategrid validate --matrix examples/gategrid/matrices/mcp-gate-mock.yaml --root examples/gategrid
+# Manual: OPENAI_API_KEY + gategrid run --matrix examples/gategrid/matrices/mcp-gate.yaml --root examples/gategrid
+```
 
 **Unblocks Spike A** (fast-mcp-telegram).
 
